@@ -1,0 +1,1739 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Trợ Thủ Quản Trò Ma Sói</title>
+  <style>
+    :root{
+      --bg: #0f1222;
+      --bg-elev: #171b33;
+      --text: #eef2ff;
+      --muted:#a5b4fc;
+      --accent:#7c5cff;
+      --accent-2:#22d3ee;
+      --danger:#ef4444;
+      --ok:#10b981;
+      --card: #141832;
+      --border:#283056;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      /* Lưới phần “Thiết lập vai trò” */
+      --roles-cols: 1.2fr .6fr 120px auto;
+    }
+
+    *{ box-sizing:border-box }
+
+    /* Ngăn mọi tràn ngang, giữ kích cỡ chữ hệ */
+    html, body{
+      height:100%;
+      max-width:100%;
+      overflow-x:hidden;
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
+    }
+
+    body{
+      margin:0;
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1400px 900px at 15% -10%, #2a3b77 0%, #18203f 58%),
+        radial-gradient(1100px 700px at 110% 30%, rgba(124,92,255,.25), rgba(34,211,238,0) 70%),
+        linear-gradient(180deg, #0e1430 0%, #0a0f22 100%);
+    }
+
+    /* ===== HEADER full-bleed, KHÔNG bo góc ===== */
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      overflow: visible;
+      isolation: isolate; /* để ::before/::after nằm trên nền nhưng dưới nội dung */
+    }
+
+/* Hiển thị đủ chữ trên các nút Điền tên, Xáo trộn, Xóa người chơi */
+#autoFillNames,
+#shuffleNames,
+#removeEmptyNames {
+  white-space: normal !important;   /* cho xuống dòng nếu thiếu chỗ */
+  text-overflow: unset !important;  /* bỏ dấu "..." */
+  overflow: visible !important;     /* hiển thị đủ nội dung */
+  max-width: none !important;       /* không giới hạn chiều ngang */
+  min-width: 120px;                 /* tối thiểu 120px cho đủ chữ */
+  flex: 1;                          /* chia đều mỗi nút nếu cùng hàng */
+}
+
+#playerSetupRow > .row {
+  display: flex;
+  justify-content: space-between; /* các nút cách đều nhau */
+  gap: 8px;                       /* khoảng cách giữa nút */
+}
+
+    /* Tấm mờ toàn bề ngang */
+    header::before{
+      content:"";
+      position:absolute;
+      inset:0;                               /* theo chiều cao header */
+      margin-left:  calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+      background: linear-gradient(0deg, rgba(15,18,34,.20), rgba(15,18,34,.60));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index:-1;
+      border-radius:0;
+    }
+    /* Hiệu ứng sáng */
+    header::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      margin-left:  calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+      pointer-events:none;
+      background:
+        radial-gradient(900px 280px at 25% 40%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%),
+        radial-gradient(700px 240px at 70% 60%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%);
+      opacity:.9;
+      z-index:-1;
+      border-radius:0;
+    }
+    /* Nếu máy hỗ trợ viewport động, vẫn đảm bảo full-bleed mà không sinh thanh trượt */
+    @supports (width: 100dvw){
+      header::before, header::after{ width:100dvw; left:50%; transform:translateX(-50%); margin:0; }
+    }
+
+    /* Nội dung tiêu đề */
+    header .title{
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+      max-width:1200px; margin:0 auto;
+    }
+    header .title .top-row{ display:flex; align-items:center; gap:10px; flex-wrap:nowrap }
+    header .title h1{
+      margin:0; font-weight:800; letter-spacing:.3px; white-space:nowrap;
+      font-size:clamp(20px,5vw,34px); line-height:1.1;
+    }
+    .logo{ width:32px; height:32px }
+    .logo img{ width:100%; height:100%; object-fit:cover; border-radius:10px }
+
+    /* ===== Layout ===== */
+    .container{ position:relative; z-index:1; max-width:1200px; margin:20px auto; padding:0 16px }
+    .container::after{
+      content:""; position:fixed; right:-6vw; top:240px; width:88vw; height:1200px;
+      border-radius:28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow: 0 0 60px rgba(124,92,255,.18), 0 0 120px rgba(34,211,238,.12);
+      opacity:.45; pointer-events:none; z-index:0;
+    }
+
+    .grid{ display:grid; gap:16px }
+    @media (min-width:980px){ .grid{ grid-template-columns:1.2fr .8fr } }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:14px; position:relative; z-index:1; max-width:100%;
+    }
+    .card h2{ margin:6px 6px 14px; font-size:20px }
+
+    label{ display:block; margin:10px 6px 6px; color:var(--muted); font-size:13px }
+    input[type="number"], input[type="text"], select, textarea{
+      width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
+      background:#0c0f1f; color:var(--text); outline:none; transition:.2s border,.2s box-shadow
+    }
+    input:focus, textarea:focus{ border-color:var(--accent); box-shadow:0 0 0 4px rgba(124,92,255,.15) }
+    /* Tự giãn: bỏ thanh cuộn bên trong */
+textarea{
+  min-height:160px;
+  resize:none;          /* không cần kéo tay nữa */
+  overflow:hidden;      /* ẩn scrollbar bên trong */
+}
+
+    .row{ display:flex; gap:10px; align-items:center }
+    .row.wrap{ flex-wrap:wrap }
+    .grow{ flex:1 }
+
+    .btn{
+      padding:10px 14px; border:1px solid var(--border); color:var(--text); background:#11152b;
+      border-radius:12px; cursor:pointer; transition:.15s transform,.2s background,.2s border-color
+    }
+    .btn:hover{ transform:translateY(-1px); background:#171c36 }
+    .btn:active{ transform:translateY(0) }
+    .btn.primary{ background:linear-gradient(135deg, var(--accent) 0%, #5f44ff 100%); border:none }
+    .btn.ghost{ background:transparent }
+    .btn.danger{ background:#2a0f12; border-color:#5e1a22; color:#ffb4b4 }
+    .btn.ok{ background:#0d2a22; border-color:#13493b; color:#c7ffee }
+
+    .hint{ font-size:12px; color:#c7cfff; opacity:.9 }
+    .chip{ display:inline-flex; align-items:center; gap:8px; font-size:12px; padding:6px 10px; border-radius:999px; background:#0c0f1f; border:1px solid var(--border) }
+
+    /* Danh sách tên người chơi – 2 cột không tràn */
+    .names{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap:10px; width:100%;
+    }
+
+    /* Tiêu đề section */
+    .section-title{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:6px }
+    .section-title h2{ margin:0 }
+
+    /* Header khu vai trò */
+    .section-title.roles-head{
+      display:grid; grid-template-columns: var(--roles-cols); align-items:end; gap:8px
+    }
+    .section-title.roles-head h2{ grid-column:1 / span 2; margin:0 }
+    .section-title.roles-head .chip{ grid-column:3; justify-self:start }
+
+    /* Bảng vai trò (grid, không tràn) */
+    .roles{
+      display:grid; grid-template-columns: var(--roles-cols); gap:8px; align-items:center; width:100%;
+    }
+    .roles .header{ font-size:12px; color:var(--muted); opacity:.8; padding:0 6px }
+    .roles .item{ display:contents }
+    .roles input[type="number"]{ width:120px }
+
+    /* Khu thêm vai trò */
+    #customRoleName{ flex:1 1 320px; min-width:200px }
+    #customRoleCount{ width:90px; text-align:center }
+    #customRoleActions{ width:100%; display:flex; justify-content:center; gap:10px; margin-top:8px }
+    #customRoleActions .btn{ min-width:140px }
+
+    .pill{ font-size:12px; opacity:.9; padding:4px 8px; border-radius:999px; border:1px dashed #334; display:inline-flex; gap:6px; align-items:center; width:max-content }
+
+    /* Danh sách phân vai – fit màn hình */
+    .assignments table{ width:100%; border-collapse:collapse; table-layout:fixed }
+    .assignments th,.assignments td{ border-bottom:1px solid #2a315a; padding:10px; text-align:left; }
+    .assignments tr.revealed td.role{ filter:none }
+    .assignments td.role.hidden{ filter:blur(8px); opacity:.7 }
+    .assignments th, .assignments td{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+
+    /* Công cụ */
+    .tools{ display:grid; gap:10px; margin-top:12px; grid-template-columns:repeat(2,1fr) }
+    .tools .btn.primary{ grid-column:1 / -1 }
+    .tools .btn{ width:100%; text-align:center; white-space:normal; justify-content:center }
+    @media (min-width:640px){ .tools{ grid-template-columns:repeat(3,1fr) } }
+    @media (min-width:960px){ .tools{ grid-template-columns:repeat(4,1fr) } }
+
+    .kbd{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace; font-size:12px; background:#0b0e1d; border:1px solid var(--border); padding:2px 6px; border-radius:6px }
+
+    .timer-big{ font-variant-numeric:tabular-nums; font-weight:800; font-size:clamp(36px,11vw,48px); letter-spacing:1px; text-align:center; margin:8px 0 12px }
+    .timer-controls{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center }
+
+    .footer{ opacity:.6; text-align:center; font-size:12px; padding:12px }
+
+    /* Print */
+    @media print{
+      header, .no-print{ display:none !important }
+      body{ background:#fff; color:#000 }
+      .card{ box-shadow:none; border:1px solid #ccc }
+      .assignments td.role.hidden{ filter:none }
+    }
+    #rolesList{ display:contents }
+
+    /* ===== Modal vai trò ===== */
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center;
+      z-index:9999; padding:16px;
+    }
+    .modal-backdrop.show{ display:flex }
+    /* Bo viền toàn bộ modal và cắt (clip) mọi hiệu ứng mờ bị tràn */
+.modal{
+  border-radius:12px;
+  overflow:hidden;                 /* QUAN TRỌNG: không cho dải mờ tràn ra */
+}
+
+/* Header modal: đã bo góc trên, vẫn giữ overflow để không bị leak */
+.modal header{
+  position:relative;
+  overflow:hidden;
+  border-radius:12px 12px 0 0;     /* bo 2 góc trên */
+}
+
+/* Phần nội dung: bo 2 góc dưới để khớp với khung modal */
+.modal .content{
+  padding:16px;
+  border-radius:0 0 12px 12px;     /* bo 2 góc dưới */
+  overflow:hidden;                 /* phòng khi có hiệu ứng mờ bên trong */
+}
+
+/* Nền tối của phần mô tả – chỉ bo góc dưới (trên đã do header đảm nhiệm) */
+#roleModalBody{
+  background: rgba(8,12,28,.72);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 0 0 12px 12px;    /* chỉ bo 2 góc dưới */
+  padding: 14px 16px;
+  color: var(--text);
+  line-height: 1.8;
+  white-space: pre-wrap; text-align: justify; text-wrap: pretty; hyphens: auto;
+}
+
+    .modal .close{ border:1px solid var(--border); background:#11152b; color:var(--text); border-radius:10px; padding:8px 12px; cursor:pointer }
+
+    /* Label “Số người chơi” không bẻ dòng */
+    label[for="playerCount"]{ white-space:nowrap }
+
+    /* Căn đều cột mô tả */
+    .roles .item div:nth-child(2){ text-align:justify; text-justify:inter-word }
+
+    /* Co giãn cho màn nhỏ – xử lý triệt để việc bị “khuyết” bên phải */
+    @media (max-width:420px){
+      .container{ padding:0 10px }
+      .card{ padding:12px; border-radius:14px }
+      .section-title{ gap:4px }
+      .chip{ padding:5px 8px; font-size:12px }
+      .btn{ padding:8px 12px; font-size:14px }
+      .btn.primary{ font-size:15px }
+      input[type="number"], input[type="text"], select, textarea{ padding:10px; border-radius:10px; font-size:15px; max-width:100% }
+
+      /* Tên người chơi 2 cột chắc chắn vừa */
+      .names{ grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) }
+
+      /* Bảng vai trò: thu cột số lượng, tránh tràn */
+      :root{ --roles-cols: 1fr .6fr 90px auto }
+      .roles input[type="number"]{ width:90px }
+
+      /* Bảng phân vai: cho wrap nội dung */
+      .assignments th, .assignments td{ padding:8px; font-size:13px; white-space:normal; word-break:break-word }
+      .assignments td .btn{ padding:6px 10px }
+
+      /* Bộ đếm thời gian */
+      #timerMin, #timerSec{ width:90px !important }
+      .card, .card *{ max-width:100% }
+    }
+
+    /* Thêm chút co lại cho màn rất nhỏ */
+    @media (max-width:360px){
+      .names{ grid-template-columns: 1fr }  /* 1 cột */
+    }
+
+    /* Co nhẹ header trên màn rất hẹp */
+    @media (max-width:400px){
+      header{ padding:12px 16px }
+      header .title h1{ font-size:clamp(18px,4.8vw,30px) }
+      .logo{ width:30px; height:30px }
+    }
+
+/* Mobile: đưa cụm nút xuống dưới input "Số người chơi", căn giữa và rút khoảng cách */
+@media (max-width: 480px){
+
+  /* hàng chứa input + cụm nút */
+  .row.wrap{
+    align-items:flex-end;
+  }
+
+  /* cụm 2 nút thành 1 hàng full-width, nằm dưới và căn giữa */
+  .row.wrap > .row{
+    flex: 0 0 100%;                 /* xuống dòng dưới */
+    justify-content:center;         /* căn giữa 2 nút */
+    margin-top: 6px;                /* rút khoảng cách */
+    gap: 8px;                       /* nút sát hơn */
+  }
+
+  /* tinh gọn kích thước nút */
+  #autoFillNames, #shuffleNames{
+    padding:8px 12px;
+    font-size:14px;
+    min-width:unset;
+  }
+
+  /* input số người chơi không quá to */
+  #playerCount{ max-width: 220px; }
+}
+
+/* Tinh chỉnh bảng “Danh sách phân vai” */
+.assignments table th:nth-child(2),
+.assignments table td:nth-child(2), /* Cột Tên người chơi */
+.assignments table th:nth-child(3),
+.assignments table td:nth-child(3)  /* Cột Vai trò */
+{
+  padding-left: 6px;        /* giảm padding trái */
+  text-align: left;         /* căn thẳng lề trái */
+}
+
+/* Tuỳ chọn: chỉnh cột số thứ tự sát trái luôn */
+.assignments table th:first-child,
+.assignments table td:first-child{
+  padding-left: 4px;
+  text-align: center;
+  width: 28px;              /* hẹp lại cột # */
+}
+
+/* Chỉnh lại cột Tiết lộ để cột Vai trò thoáng hơn */
+.assignments table th:last-child,
+.assignments table td:last-child {
+  text-align: center;   /* căn giữa nút Ẩn/Hiện */
+  width: 70px;          /* cố định chiều rộng hẹp lại */
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* Cột Vai trò dịch trái, không bị thụt */
+.assignments table th:nth-child(3),
+.assignments table td:nth-child(3) {
+  padding-left: 6px;
+  text-align: left;
+}
+
+/* Nút + Thêm vai trò -> xanh đồng bộ với "Hiện" và "Bắt đầu" */
+#addCustomRole {
+  background: #0d2a22 !important;   /* xanh đậm */
+  border-color: #13493b !important;
+  color: #c7ffee !important;
+}
+
+/* Nút Mặc định -> xám tối hơn */
+#resetRoles {
+  background: #1a1c2b !important;   /* xám tối */
+  border-color: #2a2d40 !important;
+  color: #d1d5db !important;        /* chữ xám nhạt dễ đọc */
+}
+
+/* Gom ô nhập + 2 nút vào cùng hàng */
+#playerCount {
+  max-width: 100px;      /* thu nhỏ ô nhập */
+  text-align: center;    /* canh giữa số */
+}
+
+/* Bố cục: input và 2 nút thẳng hàng */
+#playerCount, 
+#autoFillNames, 
+#shuffleNames {
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: 0;         /* bỏ khoảng cách thừa */
+}
+
+#autoFillNames, #shuffleNames {
+  padding: 8px 12px;
+  font-size: 14px;
+  margin-left: 6px;      /* cách nhẹ sang phải */
+}
+
+/* === Số người chơi + 2 nút nằm CÙNG HÀNG (mọi cỡ màn) === */
+.row.wrap { align-items: flex-end; }
+
+/* Đừng để .grow chiếm hết chiều ngang */
+.row.wrap .grow{ 
+  flex: 0 0 auto;          /* vừa đủ nội dung */
+  margin-right: 8px;
+}
+
+/* Cụm hai nút ở ngay bên phải, không xuống dòng */
+.row.wrap > .row{
+  flex: 0 0 auto;
+  gap: 8px;
+  margin-top: 0;           /* bỏ khoảng cách thừa */
+}
+
+/* Bỏ wrapper + label rỗng của hai nút để canh thẳng hàng đẹp */
+.row.wrap > .row > div{ display: contents; }
+.row.wrap > .row label{ display: none; }
+
+/* Thu nhỏ và canh giữa số người chơi */
+#playerCount{ 
+  width: 100px;            /* hoặc 110px tuỳ bạn */
+  max-width: 100px;
+  text-align: center;
+}
+
+/* Nút tinh gọn chút để vừa hàng */
+#autoFillNames, #shuffleNames{
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+/* Fallback màu nền đặc khi gradient chưa kịp render */
+html, body{
+  background-color:#0a0f22;   /* trùng tông nền cuối của bạn */
+}
+
+/* Card dùng nền đặc (ít trong suốt) để không lộ nền trắng khi cuộn */
+.card{
+  background: var(--card) !important;         /* #141832 */
+  /* Nếu muốn vẫn có cảm giác kính mờ:
+  background: linear-gradient(180deg, rgba(20,24,50,.98), rgba(20,24,50,.96)) !important;
+  */
+}
+
+/* Trên thiết bị di động: bỏ blur để tránh jank/flash trắng khi cuộn nhanh */
+@media (max-width: 600px){
+  header::before{
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(15,18,34,.60) !important; /* vẫn có lớp mờ tối */
+  }
+  header::after{ opacity:.6 !important; } /* nhẹ hiệu ứng sáng để giảm paint */
+}
+
+/* Đưa các khối lớn lên compositing layer để hạn chế checkerboard */
+.container,
+.card,
+.assignments table{
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.assignments th,
+.assignments td{ background-color: rgba(12,15,31,.98); }
+
+/* Header của modal: căn tiêu đề bên trái, nút Đóng bên phải */
+.modal header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;           /* có thể giữ như cũ nếu bạn đã set */
+  overflow: hidden;              /* giữ theo thiết kế ban đầu */
+  border-radius: 12px 12px 0 0;  /* đảm bảo bo góc trên */
+}
+
+/* Tiêu đề co giãn và cắt ... khi dài */
+#roleModalTitle{
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  flex: 1 1 auto;                /* chiếm phần còn lại */
+  min-width: 0;                  /* để text-overflow hoạt động trong flex */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Nút Đóng giữ kích thước gọn và không xuống dòng */
+.modal .close{
+  flex: 0 0 auto;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+/* Căn giữa 2 nút "Điền tên mặc định" và "Xáo trộn danh sách" */
+.row.wrap > .row{
+  flex: 0 0 100%;        /* chiếm toàn bộ chiều ngang */
+  justify-content: center;
+  margin-top: 6px;       /* khoảng cách nhẹ so với ô nhập số */
+}
+
+/* Nút "Điền tên mặc định" -> xám đậm */
+#autoFillNames{
+  background: #1a1c2b !important;   /* xám tối */
+  border-color: #2a2d40 !important;
+  color: #d1d5db !important;        /* chữ xám nhạt dễ đọc */
+}
+
+/* Nút "Xáo trộn tên" -> xanh (giống Hiện/Bắt đầu) */
+#shuffleNames{
+  background: #0d2a22 !important;   /* xanh đậm */
+  border-color: #13493b !important;
+  color: #c7ffee !important;        /* chữ xanh nhạt */
+}
+
+/* Căn giữa label và ô nhập "Số người chơi" */
+#playerCount{
+  margin: 0 auto;        /* đưa input vào giữa */
+  display: block;
+  text-align: center;
+}
+
+label[for="playerCount"]{
+  display: block;
+  text-align: center;    /* căn chữ "Số người chơi" giữa */
+}
+
+/* === Căn giữa "Số người chơi" + input + 2 nút, chỉ ở hàng playerSetupRow === */
+#playerSetupRow{
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Label + input ở giữa, nằm trên cùng một cột */
+#playerSetupRow .grow{
+  flex: 0 0 100%;
+  text-align: center;
+}
+#playerSetupRow label[for="playerCount"]{
+  display: block;
+  margin: 10px 0 6px;       /* tạo khoảng cách với dòng Mẹo */
+}
+#playerSetupRow #playerCount{
+  display: block;
+  margin: 0 auto;           /* giữa ngang */
+  width: 110px;
+  max-width: 110px;
+  text-align: center;
+}
+
+/* Hai nút ở dòng dưới, căn giữa */
+#playerSetupRow > .row{
+  flex: 0 0 100%;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+/* bỏ label trống bọc nút */
+#playerSetupRow > .row > div{ display: contents; }
+#playerSetupRow > .row label{ display: none; }
+
+/* Highlight theo phe – CHỈ khi đã bấm Hiện */
+.assignments tr.revealed.hl-wolf    td { background: rgba(239,68,68,.10); }   /* Phe sói */
+.assignments tr.revealed.hl-village td { background: rgba(59,130,246,.10); }  /* Phe dân */
+.assignments tr.revealed.hl-flip    td { background: rgba(16,185,129,.10); }  /* Đổi phe */
+.assignments tr.revealed.hl-third   td { background: rgba(234,179,8,.10); }   /* Phe 3 & custom */
+
+/* --- Nút cho khu Ghi chú --- */
+.notes-tools{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 10px; }
+.notes-tools .btn{ min-width:140px }
+
+/* Ẩn vai trò: để TRỐNG, không blur, vẫn giữ chiều cao ô */
+.assignments td.role.hidden{
+  filter: none !important;
+  opacity: 1 !important;
+  color: transparent !important;
+  text-shadow: none !important;
+}
+
+/* Highlight theo phe – CHỈ khi đã bấm Hiện */
+.assignments tr.revealed.f-wolf  td { background: rgba(239,68,68,.10); }  /* Phe sói */
+.assignments tr.revealed.f-vil   td { background: rgba(59,130,246,.10); } /* Phe dân */
+.assignments tr.revealed.f-swap  td { background: rgba(16,185,129,.10); } /* Đổi phe */
+.assignments tr.revealed.f-third td { background: rgba(234,179,8,.10); }  /* Phe 3 & custom */
+
+/* ===== Chết / bị loại: tô đen đậm, đè lên mọi highlight ===== */
+.assignments tr.dead td{
+  background: #0a0c14 !important;   /* đen xanh đậm hơn (#0a0c14) */
+  color: #8f97a8;                   /* chữ xám nhạt hơn để nổi bật */
+}
+.assignments tr.dead td .btn{
+  opacity: .8;
+  filter: brightness(0.9);          /* nút cũng tối đi chút */
+}
+
+/* Ẩn hiệu ứng trang trí gây tràn trên màn nhỏ / vừa */
+@media (max-width: 1024px){
+  .container::after{ display:none !important; }
+}
+
+/* Bảng/ô không tràn ngang */
+.assignments table{
+  table-layout: fixed;
+  width: 100%;
+}
+.assignments th, .assignments td{
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Giữ Phút + Giây cùng hàng */
+#timerMin, #timerSec {
+  width: 90px !important;     /* co nhỏ chút để chắc chắn vừa */
+  min-width: 70px;            /* không nhỏ quá */
+  display: inline-block;
+}
+
+#timerMin, #timerSec {
+  box-sizing: border-box;
+}
+
+/* Bố cục hàng timer: ép không xuống dòng */
+#timerMin, #timerSec {
+  flex: 0 0 auto;             /* giữ cố định, không co kéo */
+}
+
+#timerSec {
+  margin-left: 8px;           /* tạo khoảng cách với ô phút */
+}
+
+.timer-row {
+  display: flex;
+  flex-wrap: nowrap !important; /* ép luôn ngang */
+  gap: 8px;
+}
+
+/* Làm ô "Chế độ" rộng hơn một chút */
+#timerMode{
+  width: 160px;          /* bạn có thể đổi 170–180px nếu thích */
+  min-width: 150px;
+  display: inline-block;
+}
+
+/* Căn CẢ 3 ô (Chế độ / Phút / Giây) vào chính giữa hàng */
+.timer-row{
+  display: flex;
+  justify-content: center;   /* Ctrl + E */
+  gap: 12px;                 /* khoảng cách giữa các ô */
+}
+
+/* Đừng để .grow đẩy lệch sang trái trong hàng timer */
+.timer-row .grow{
+  flex: 0 0 auto;            /* chỉ vừa nội dung */
+  text-align: center;        /* label và select đều giữa */
+}
+
+/* Cho đẹp: căn giữa label + input của 2 cột Phút/Giây */
+.timer-row > div{
+  text-align: center;
+}
+
+/* Giữ Phút/Giây không xuống hàng (nếu bạn chưa có) */
+#timerMin, #timerSec{
+  width: 110px !important;
+  min-width: 90px;
+  flex: 0 0 auto;
+}
+
+/* Căn giữa 2 nút "Xóa tất cả" và "Soạn mẫu nhanh" */
+.notes-tools{
+  display: flex;
+  justify-content: center;  /* Ctrl + E */
+  gap: 12px;                /* khoảng cách giữa nút */
+  margin: 8px 0 10px;
+}
+
+/* Cho các nút đồng đều */
+.notes-tools .btn{
+  min-width: 140px;
+  text-align: center;
+}
+
+/* Chữ "– BỊ LOẠI" */
+.assignments td .eliminated {
+  color: #ff6b6b;       /* đỏ nhạt cảnh báo */
+  font-weight: 600;
+  margin-left: 6px;
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+/* td giữ kiểu bảng, không flex */
+.assignments td.name-cell{
+  display: table-cell !important;   /* ép về table-cell để không phá layout */
+  vertical-align: middle;
+  padding-left: 6px;
+}
+
+/* wrapper bên trong chia 2 phía: Tên | – BỊ LOẠI */
+.assignments td.name-cell .name-wrap{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Tên cắt ... khi dài */
+.assignments td.name-cell .player-name{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nhãn – BỊ LOẠI */
+.assignments td.name-cell .eliminated{
+  color: #ff6b6b;
+  font-weight: 700;
+  font-size: .92em;
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+/* Chữ BỊ LOẠI nổi bật */
+.assignments td .eliminated {
+  color: #ff6b6b;
+  font-weight: 600;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+/* td giữ kiểu bảng, không flex */
+.assignments td.name-cell {
+  vertical-align: middle;
+  padding-left: 6px;  /* tuỳ chỉnh */
+}
+
+/* wrapper mới bên trong để chia 2 bên */
+.assignments td.name-cell .name-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Tên bị cắt ... nếu dài */
+.assignments td.name-cell .player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nhãn BỊ LOẠI */
+.assignments td.name-cell .eliminated {
+  color: #ff6b6b;
+  font-weight: 700;
+  font-size: .92em;
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+/* --- MOBILE HARDEN KIT: chống tràn & co giãn an toàn --- */
+
+/* 1) Các item trong flex/grid mặc định được phép co lại */
+.grid > *, .row > *, .section-title > *, .tools > *,
+.roles .item > *, .assignments table th, .assignments table td {
+  min-width: 0;
+}
+
+/* 2) Văn bản dài có thể xuống dòng & cắt ... khi cần */
+:where(h1,h2,h3,h4,h5,p,div,span,button,td,th,label){
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-wrap: balance;        /* đẹp trên trình duyệt mới */
+}
+
+/* 3) Hình/ SVG không vượt chiều ngang */
+img, svg, video, canvas { max-width: 100%; height: auto; }
+
+/* 4) Không cho phần tử nào tạo thanh cuộn ngang ngoài ý muốn */
+html, body, .container { overflow-x: hidden; }
+
+/* 5) Header & container tôn trọng safe-area (tai thỏ iPhone) */
+header {
+  padding-left: calc(16px + env(safe-area-inset-left, 0px));
+  padding-right: calc(16px + env(safe-area-inset-right, 0px));
+}
+.container {
+  padding-left: calc(16px + env(safe-area-inset-left, 0px));
+  padding-right: calc(16px + env(safe-area-inset-right, 0px));
+}
+
+/* 6) Vai trò (grid) luôn “lọt” màn – cho cột số lượng co nhỏ */
+:root { --roles-cols: 1.1fr .8fr 110px auto; }
+@media (max-width: 480px){
+  :root { --roles-cols: 1fr .8fr 90px auto; }
+  .roles input[type="number"]{ max-width: 90px; }
+}
+
+/* 7) Tên người chơi – lưới không tràn */
+.names { grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); }
+@media (max-width: 360px){ .names { grid-template-columns: 1fr; } }
+
+/* 8) Bảng phân vai: cho phép wrap & ép cột nút hẹp hơn trên màn nhỏ */
+.assignments table { table-layout: fixed; width: 100%; }
+.assignments th, .assignments td { white-space: normal; }   /* cho xuống dòng khi cần */
+@media (max-width: 420px){
+  .assignments table th:last-child,
+  .assignments table td:last-child { width: 60px; }          /* nút nhỏ hơn chút */
+  .assignments td .btn{ padding:6px 8px; font-size:13px; }
+}
+
+/* 9) Hàng timer: co đều, không đẩy tràn */
+.timer-row { flex-wrap: nowrap; gap: 8px; }
+.timer-row > * { min-width: 0; }          /* cho phép co */
+#timerMode, #timerMin, #timerSec { width: auto; }
+@media (max-width: 360px){
+  #timerMode{ min-width: 120px; }
+  #timerMin, #timerSec{ min-width: 84px; }
+}
+
+/* 10) Nút dài/nhãn dài vẫn co gọn */
+.btn { max-width: 100%; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+
+/* 11) Trang trí nền không gây tràn (đã ẩn <=1024, nhưng chặn thêm) */
+.container::after { pointer-events:none; max-width: 100dvw; }
+
+/* 12) Trường hợp cực đoan (<340px): bọc bảng để không tạo tràn toàn trang */
+@media (max-width: 340px){
+  .table-wrap{ width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .table-wrap table{ min-width: 440px; }  /* chỉ cuộn ngang bên trong khi RẤT hẹp */
+}
+
+/* === Thu nhỏ ô nhập Phút & Giây === */
+#timerMin,
+#timerSec {
+  width: 70px !important;    /* nhỏ hơn (trước bạn để 90–110px) */
+  max-width: 80px;
+  text-align: center;
+  padding: 6px 8px;          /* giảm padding bên trong */
+  font-size: 15px;           /* chữ nhỏ gọn vừa mắt */
+}
+
+/* Mobile: ép nhỏ hơn nữa nếu màn rất hẹp */
+@media (max-width: 420px) {
+  #timerMin,
+  #timerSec {
+    width: 60px !important;
+    font-size: 14px;
+  }
+}
+
+/* === Thu gọn cột Mô tả & Số lượng để nhường chỗ cho Vai trò === */
+.roles {
+  grid-template-columns: 1.2fr 0.6fr 80px auto; /* Vai trò | Mô tả | Số lượng | (xóa) */
+  gap: 8px;
+}
+
+/* Ô nhập số lượng nhỏ lại */
+.roles input[type="number"] {
+  width: 70px !important;   /* gọn hơn (trước là 120px) */
+  max-width: 80px;
+  text-align: center;
+  padding: 4px 6px;
+  font-size: 15px;
+}
+
+/* Nút "Hiện" trong cột Mô tả */
+.roles .item button {
+  min-width: 70px;          /* nút nhỏ hơn */
+  padding: 6px 10px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Trên màn hẹp hơn 480px, ép nhỏ hơn nữa */
+@media (max-width: 480px) {
+  .roles {
+    grid-template-columns: 1fr 0.6fr 60px auto;
+  }
+  .roles input[type="number"] {
+    width: 60px !important;
+    font-size: 14px;
+  }
+  .roles .item button {
+    min-width: 60px;
+    font-size: 13px;
+    padding: 5px 8px;
+  }
+}
+
+/* Căn giữa dòng ghi chú */
+.hint {
+  text-align: center;
+}
+
+/* Ẩn ô Mẹo */
+.section-title .chip {
+  display: none !important;
+}
+
+/* ==== TIMER: 3 ô thẳng hàng, cao bằng nhau, không tràn phải ==== */
+
+/* Bỏ mọi width cứng trước đó */
+#timerMode,
+#timerMin,
+#timerSec{
+  width: 100% !important;   /* để cột quyết định bề ngang */
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* ==== TIMER: 3 ô thẳng hàng, cao bằng nhau, Giây sát Phút ==== */
+.timer-row{
+  display: grid !important;
+  grid-template-columns: minmax(160px,1fr) 80px 80px; /* chế độ | phút | giây */
+  grid-template-areas: "mode min sec";
+  column-gap: 8px;          /* khoảng cách chung */
+  align-items: end;
+}
+
+.timer-row > div:nth-child(2){ grid-area: min; }
+.timer-row > div:nth-child(3){ grid-area: sec; }
+
+/* Thu hẹp khoảng cách giữa Phút và Giây */
+.timer-row > div:nth-child(2),
+.timer-row > div:nth-child(3){
+  margin-right: 0;          /* không có dư bên phải */
+}
+.timer-row > div:nth-child(2){ margin-right: 4px; } /* chỉ cách nhẹ giữa Phút và Giây */
+
+.timer-row select,
+.timer-row input[type="number"]{
+  height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.timer-row label{
+  display:block;
+  margin: 6px 2px;
+  text-align:center;
+}
+
+/* Màn nhỏ */
+@media (max-width: 400px){
+  .timer-row{
+    grid-template-columns: minmax(140px,1fr) 70px 70px;
+    column-gap: 6px;        /* hẹp hơn nữa */
+  }
+  .timer-row select,
+  .timer-row input[type="number"]{ height: 40px; font-size: 15px; }
+}
+
+/* Căn giữa nhãn + input của cột Giây */
+.timer-row > div:nth-child(3) {
+  text-align: center;    /* nhãn Giây căn giữa */
+  justify-self: center;  /* ô nhập liệu Giây căn giữa theo cột */
+}
+
+/* Đảm bảo input không bị kéo lệch */
+#timerSec {
+  margin-left: 0 !important;
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <div class="top-row">
+        <div class="logo" aria-hidden="true">
+          <img src="https://play-lh.googleusercontent.com/NoTmMzso2UYOdoaLcADzE6eRnZaKpfz_gTcFsJMBQyLB09Q_J8I0aLWRlTi6RZpTdO33" alt="Logo Sói">
+        </div>
+        <h1>Trợ Thủ Quản Trò 🐺🎲</h1>
+      </div>
+      <div class="chip" title="Dữ liệu được lưu tự động trong trình duyệt">Created by Dang Khoa ❤️</div>
+    </div>
+  </header>
+
+  <div class="container grid">
+    <!-- LEFT: SETUP + ASSIGNMENT -->
+    <section class="card">
+      <div class="section-title">
+        <h2>👤 Thiết lập người chơi</h2>
+        <div class="chip">Mẹo: <span class="kbd">Tab</span> để chuyển nhanh giữa các ô tên trên máy tính.</div>
+      </div>
+
+      <div class="row wrap" id="playerSetupRow">
+        <div class="grow">
+          <label for="playerCount">Số người chơi</label>
+          <input id="playerCount" type="number" min="3" max="40" value="10" />
+        </div>
+        <div class="row" style="gap:8px; align-items:flex-end">
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn" id="autoFillNames">Điền tên mặc định</button>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn" id="shuffleNames">Xáo trộn danh sách</button>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn danger" id="removeEmptyNames">Xóa tên người chơi</button>
+          </div>
+        </div>
+      </div>
+
+      <label>Danh sách tên người chơi</label>
+      <div id="names" class="names"></div>
+
+      <hr style="border-color:#28305633; margin:16px 0">
+
+      <!-- Header khu vai trò -->
+      <div class="section-title roles-head">
+        <h2>🃏 Thiết lập vai trò</h2>
+        <div class="chip">Còn trống: <b id="slotsLeft">0</b></div>
+      </div>
+
+      <div class="roles" role="table" aria-label="Bảng vai trò">
+        <div class="header">Vai trò</div>
+        <div class="header">Mô tả</div>
+        <div class="header">Số lượng</div>
+        <div class="header">&nbsp;</div>
+        <div id="rolesList"></div>
+      </div>
+
+      <div class="row wrap" style="margin-top:8px" id="customRoleRow">
+        <div class="grow row">
+          <input id="customRoleName" type="text" placeholder="Thêm vai trò mới (ví dụ: Bị nguyền rủa)" />
+          <input id="customRoleCount" type="number" min="1" value="1" />
+        </div>
+        <div id="customRoleActions" class="row">
+          <button class="btn" id="addCustomRole">+ Thêm vai trò</button>
+          <button class="btn ghost" id="resetRoles" title="Đưa vai trò về mặc định">Mặc định</button>
+        </div>
+      </div>
+
+      <div class="hint" style="margin:6px">Nếu tổng vai trò vượt quá số người, bạn sẽ được nhắc điều chỉnh. Ô trống sẽ tự lấp bằng vai trò <b>Dân làng</b>.</div>
+
+      <div class="tools no-print" style="margin-top:12px">
+        <button class="btn primary" id="assignBtn">🎲 Chia vai trò ngẫu nhiên</button>
+        <button class="btn" id="reshuffleBtn" disabled>🔀 Trộn lại</button>
+        <button class="btn" id="revealAllBtn" disabled>👁️‍🗨️ Hiện/Ẩn tất cả</button>
+        <button class="btn" id="copyBtn" disabled>📋 Sao chép</button>
+        <!-- Đổi nút In thành nút Sắp xếp -->
+        <button class="btn" id="sortBtn" disabled>↕️ Sắp xếp</button>
+      </div>
+
+      <div class="assignments" id="assignments" style="margin-top:8px"></div>
+    </section>
+
+    <!-- RIGHT: TIMER + NOTES -->
+    <aside class="card">
+      <div class="section-title">
+        <h2>⏳️ Bộ đếm thời gian</h2>
+        <div class="row">
+          <label class="chip" style="cursor:pointer"><input id="soundToggle" type="checkbox" checked style="margin-right:8px">Chuông</label>
+        </div>
+      </div>
+
+      <div class="row wrap timer-row">
+  <div class="grow">
+    <label>Chế độ</label>
+    <select id="timerMode">
+      <option value="down">Đếm ngược</option>
+      <option value="up">Đếm xuôi</option>
+    </select>
+  </div>
+  <div>
+    <label>Phút</label>
+    <input id="timerMin" type="number" min="0" value="2">
+  </div>
+  <div>
+    <label>Giây</label>
+    <input id="timerSec" type="number" min="0" max="59" value="0">
+  </div>
+</div>
+
+      <div class="timer-big" id="timerDisplay">02:00</div>
+      <div class="timer-controls no-print">
+        <button class="btn ok" id="startPauseBtn">▶︎ Bắt đầu</button>
+        <button class="btn" id="resetTimerBtn">⟲ Đặt lại</button>
+        <button class="btn" data-preset="30">Biện hộ (30s)</button>
+        <button class="btn" data-preset="120">Thảo luận (2’)</button>
+        <button class="btn" data-preset="180">Thảo luận (3’)</button>
+        <button class="btn" data-preset="300">Thảo luận (5’)</button>
+      </div>
+
+      <hr style="border-color:#28305633; margin:18px 0">
+
+      <h2>🗒️ Ghi chú</h2>
+      <!-- Nút mới cho ghi chú -->
+      <div class="notes-tools no-print">
+        <button class="btn danger" id="clearNotesBtn">🗑️ Xóa tất cả</button>
+        <button class="btn" id="quickTemplateBtn">✍️ Soạn mẫu nhanh</button>
+      </div>
+      <textarea id="notes" placeholder="Ghi chú: ai bị treo cổ, ai bị sói cắn, lá phiếu, v.v."></textarea>
+    </aside>
+  </div>
+
+  <div class="footer no-print">Created by Dang Khoa ❤️ – Lưu tự động, hoạt động offline.</div>
+
+  <!-- Modal xem mô tả vai -->
+  <div id="roleModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal" role="document">
+      <header>
+        <h3 id="roleModalTitle">Vai trò</h3>
+        <button class="close" id="roleModalClose">Đóng</button>
+      </header>
+      <div class="content" id="roleModalBody"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const qs = (s, el=document)=>el.querySelector(s);
+  const qsa = (s, el=document)=>Array.from(el.querySelectorAll(s));
+  const $ = {
+    playerCount: qs('#playerCount'),
+    namesWrap: qs('#names'),
+    autoFillNames: qs('#autoFillNames'),
+    shuffleNames: qs('#shuffleNames'),
+    removeEmptyNames: qs('#removeEmptyNames'),
+    rolesList: qs('#rolesList'),
+    slotsLeft: qs('#slotsLeft'),
+    addCustomRole: qs('#addCustomRole'),
+    customRoleName: qs('#customRoleName'),
+    customRoleCount: qs('#customRoleCount'),
+    resetRoles: qs('#resetRoles'),
+
+    assignBtn: qs('#assignBtn'),
+    reshuffleBtn: qs('#reshuffleBtn'),
+    revealAllBtn: qs('#revealAllBtn'),
+    copyBtn: qs('#copyBtn'),
+    sortBtn: qs('#sortBtn'),
+    assignments: qs('#assignments'),
+
+    // Timer
+    timerMode: qs('#timerMode'),
+    timerMin: qs('#timerMin'),
+    timerSec: qs('#timerSec'),
+    timerDisplay: qs('#timerDisplay'),
+    startPauseBtn: qs('#startPauseBtn'),
+    resetTimerBtn: qs('#resetTimerBtn'),
+    soundToggle: qs('#soundToggle'),
+
+    // Notes buttons
+    clearNotesBtn: qs('#clearNotesBtn'),
+    quickTemplateBtn: qs('#quickTemplateBtn'),
+  };
+
+  // ===== Modal helpers =====
+  const modal = {
+    wrap: document.getElementById('roleModal'),
+    title: document.getElementById('roleModalTitle'),
+    body: document.getElementById('roleModalBody'),
+    btnClose: document.getElementById('roleModalClose'),
+    open(title, text){
+      this.title.textContent = title || 'Vai trò';
+      this.body.textContent = text || '';
+      this.wrap.classList.add('show');
+      this.wrap.setAttribute('aria-hidden','false');
+      this.btnClose.focus();
+    },
+    close(){ this.wrap.classList.remove('show'); this.wrap.setAttribute('aria-hidden','true'); }
+  };
+  modal.btnClose.addEventListener('click', ()=>modal.close());
+  modal.wrap.addEventListener('click', (e)=>{ if(e.target === modal.wrap) modal.close(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') modal.close(); });
+
+  // ====== STATE ======
+  const STORAGE_KEY = 'werewolf_mod_state_v1';
+  let STATE = {
+    playerCount: 10,
+    names: [],
+    roles: {},          // {key: count}
+    customRoles: {},    // {name: count}
+    assignments: null,
+    reveal: {},         // {index: bool}
+    dead: {},
+    notes: '',
+    timer: {mode:'down', min:2, sec:0, running:false, left:120, sound:true},
+  };
+
+  // Default roles
+  const DEFAULT_ROLES = [
+    { key:'cupid', name:'💘 Thần tình yêu', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi ( được phép chọn cả mình). Hai người được chọn sẽ trở thành 2 người yêu nhau. Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo.', color:'#e91e63' },
+    { key:'werewolf', name:'🐺 Sói', hint:'Vào ban đêm, Ma sói sẽ tỉnh dậy cùng nhau và thống nhất giết 1 nạn nhận nào đó. Sói có thể không giết người nào và không được giết sói khác.', color:'#d32f2f' },
+    { key:'werecub', name:'🐺 Sói con', hint:'Sói con là Sói và thức dậy cùng Sói mỗi đêm. Nếu Sói con bị giết, Sói còn lại sẽ giết 2 người vào đêm hôm sau. Sói có thể chọn giết Sói Con như 1 sự hy sinh ( Tất cả Sói bao gồm cả Sói con đều đồng ý việc đó). Khi đó Sói có thể lập tức giết 2 người chơi khác vào ngay đêm hôm đó.', color:'#ff7043' },
+    { key:'minion', name:'🎭️ Kẻ phản bội', hint:'Phản bội thức dậy cùng Sói và biết Sói là ai. Tham gia cùng Sói để giết Dân làng. Tuy nhiên Tiên tri khi soi vào Phản bội thì vẫn ra dân làng.', color:'#6d4c41' },
+    { key:'seer', name:'🔮 Tiên tri', hint:'Mỗi đêm, Tiên tri chỉ tay vào một người. Quản trò sẽ cho Tiên tri biết người đó có phải là Ma sói hay không.', color:'#3f51b5' },
+    { key:'witch', name:'🧙‍♂️ Phù thuỷ', hint:'Phù thủy sẽ có hai bình thuốc. Một bình thuốc để cứu 1 người và một bình thuốc để giết 1 người. Trong đêm, Quản trò sẽ cho Phù Thủy biết ai sẽ bị giết trong đêm và hỏi xem Phù thủy có muốn sử dụng quyền năng nào hay không. Có thể dùng cả hai bình thuốc này vào cùng 1 đêm, nhưng mỗi bình chỉ dùng một lần.', color:'#9c27b0' },
+    { key:'hunter', name:'🏹 Thợ săn', hint:'Nếu thợ săn chết, hắn lập tức được phép nhắm vào một người và người này sẽ bị chết. Nếu thợ săn chết trong đêm, Quản trò sẽ đụng vai Thợ săn để báo Thợ săn nhắm bắn.', color:'#ff9800' },
+    { key:'guard', name:'🛡️ Bảo vệ', hint:'Mỗi đêm, Bảo vệ chọn một người khác nhau để bảo vệ. Người chơi này sẽ bất tử vào đêm đó (nhưng không thể bảo vệ khỏi Phù Thủy).', color:'#4caf50' },
+    { key:'spellcaster', name:'🔇 Pháp sư câm', hint:'Mỗi đêm, Pháp sư câm sẽ được phép chỉ định 1 người bị câm vào hôm sau. Người này vào ngày hôm sau sẽ không được nói. ', color:'#009688' },
+    { key:'doppelganger', name:'👥 Nhân bản', hint:'Vào đêm đầu tiên, Nhân bản tỉnh dậy và lựa chọn một người chơi. Nếu người chơi kia chết trong đêm, Nhân bản sẽ bí mật lấy chức năng của người đó. Trước khi có chức năng mới, Nhân bản theo Phe dân. Sau khi có chức năng mới, Nhân bản theo phe của chức năng này. ', color:'#607d8b' },
+    { key:'cursed', name:'🌑 Kẻ bị nguyền', hint:'Kẻ bị Nguyền rủa ban đầu là người, Tiên tri soi cũng ra người. Nếu Kẻ bị Nguyền rủa bị Sói cắn thì sẽ không chết, mà từ đêm tiếp theo sẽ biến thành Sói, đồng thời nếu Tiên tri sói thì cũng sẽ là Sói. Kẻ bị Nguyền rủa mỗi đêm được gọi dậy riêng biệt, kể cả sau khi hóa Sói, để cho người này biết đã bị hóa Sói hay chưa. ', color:'#673ab7' },
+    { key:'tanner', name:'😓 Chán đời', hint:'Chán đời chỉ thắng khi anh ta bị giết. Các điều kiện thắng khác cũng được áp dụng. ', color:'#795548' },
+    { key:'village', name:'👨🏻‍🌾 Dân làng', hint:'Không có tính năng đặc biệt nào cả, ngủ suốt đêm và tham gia biểu quyết tìm Sói vào ban ngày. ', color:'#8bc34a' },
+    { key:'prince', name:'👑 Hoàng tử', hint:'Hoàng tử không thể bị treo cổ chết. Vào lần bị vote chết và chuẩn bị treo cổ, người này sẽ lật lá bài lên để mọi người được thấy và không phải chịu treo cổ. Tất cả người chơi lập tức đi ngủ. ', color:'#fbc02d' },
+    { key:'elder', name:'👴 Già làng', hint:'Già làng có 2 mạng sống. Nếu chết cả 2 lần thì các quyền năng (tiên tri, bảo vệ,…) của nhân vật khác sẽ mất đi.', color:'#ffffff' },
+    { key:'tough guy', name:'💪 Lực sĩ', hint:'Nếu bị Sói cắn, Lực sĩ sẽ chết vào đêm tiếp theo chứ không phải ngay tại đêm đó.', color:'#c2185b' },
+    { key:'mayor', name:'⭐ Thị trưởng', hint:'Phiếu biểu quyết của Thị trường được tính là 2 phiếu khi biểu quyết treo cổ.', color:'#03a9f4' },
+  ];
+
+  const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+  const load = () => { try{ const s = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s) STATE = {...STATE, ...s}; }catch{} };
+  const clamp = (n,a,b)=>Math.min(Math.max(n,a),b);
+  const pad = n=>String(n).padStart(2,'0');
+  const rng = (max)=>{ if(crypto?.getRandomValues){ const arr=new Uint32Array(1); crypto.getRandomValues(arr); return arr[0]/0xffffffff*max; } return Math.random()*max; };
+  const shuffle = (arr)=>{ const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(rng(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+
+  // ====== NAMES UI ======
+  function renderNames(){
+    $.namesWrap.innerHTML = '';
+    const n = Number($.playerCount.value||STATE.playerCount);
+    while(STATE.names.length < n) STATE.names.push('');
+    if(STATE.names.length > n) STATE.names.length = n;
+
+    for(let i=0;i<n;i++){
+      const w = document.createElement('div');
+      const input = document.createElement('input');
+      input.type='text'; input.placeholder = `Người chơi ${i+1}`; input.value = STATE.names[i]||'';
+      input.oninput = (e)=>{ STATE.names[i] = e.target.value; save(); };
+      w.appendChild(input); $.namesWrap.appendChild(w);
+    }
+    save();
+  }
+
+  $.playerCount.addEventListener('change', ()=>{
+    STATE.playerCount = clamp(Number($.playerCount.value||10),3,40);
+    $.playerCount.value = STATE.playerCount;
+    renderNames(); updateSlotsLeft();
+  });
+  $.autoFillNames.addEventListener('click', ()=>{
+    const n = Number($.playerCount.value||10);
+    STATE.names = Array.from({length:n},(_,i)=>`Người chơi ${i+1}`);
+    renderNames();
+  });
+  $.shuffleNames.addEventListener('click', ()=>{ STATE.names = shuffle(STATE.names); renderNames(); });
+
+// Xóa các ô tên đang trống (chỉ placeholder, chưa nhập)
+$.removeEmptyNames.addEventListener('click', () => {
+  const before = STATE.names.slice();
+  const keep = before.filter(name => (name || '').trim() !== '');
+  const removed = before.length - keep.length;
+
+  if (removed === 0) {
+    alert('Không có ô tên trống để xóa.');
+    return;
+  }
+
+  // Cập nhật state + ô số người chơi
+  STATE.names = keep;
+  STATE.playerCount = keep.length;
+  $.playerCount.value = STATE.playerCount;
+
+  // Sau khi thay đổi số người, reset khu phân vai (tránh lệch)
+  STATE.assignments = null;
+  STATE.reveal = {};
+  if ($.reshuffleBtn) $.reshuffleBtn.disabled = true;
+  if ($.revealAllBtn) $.revealAllBtn.disabled = true;
+  if ($.copyBtn) $.copyBtn.disabled = true;
+  if ($.sortBtn) $.sortBtn.disabled = true;
+
+  renderNames();
+  updateSlotsLeft();
+  save();
+});
+
+  // ====== ROLES UI ======
+  function ensureDefaultRoles(){ if(!STATE.roles || Object.keys(STATE.roles).length===0){ STATE.roles = {werewolf:2, seer:1, witch:1}; } }
+
+  function renderRoles(){
+    $.rolesList.innerHTML=''; ensureDefaultRoles();
+
+    const makeRow = (role)=>{
+      const row = document.createElement('div'); row.className='item';
+
+      const name = document.createElement('div');
+      name.innerHTML = `<span class="pill" style="border-color:${role.color||'#334'}">
+        <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="${role.color||'#888'}"/></svg> ${role.name}
+      </span>`;
+
+      const hint = document.createElement('div');
+      const viewBtn = document.createElement('button');
+      viewBtn.className='btn ghost'; viewBtn.textContent='Hiện';
+      viewBtn.addEventListener('click', ()=> modal.open(role.name, role.hint||'')); hint.appendChild(viewBtn);
+
+      const count = document.createElement('input');
+      count.type='number'; count.min='0'; count.value = STATE.roles[role.key]||0;
+      count.addEventListener('change', ()=>{
+        STATE.roles[role.key] = clamp(Number(count.value||0),0,40);
+        count.value = STATE.roles[role.key]; updateSlotsLeft(); save();
+      });
+
+      const del = document.createElement('div');
+
+      $.rolesList.appendChild(row);
+      row.append(name, hint, count, del);
+    };
+
+    DEFAULT_ROLES.forEach(makeRow);
+
+    // Custom roles
+    Object.entries(STATE.customRoles||{}).forEach(([name,countVal])=>{
+      const row = document.createElement('div'); row.className='item';
+
+      const nameDiv = document.createElement('div');
+      nameDiv.innerHTML = `<span class="pill">🧩 ${name}</span>`;
+
+      const hint = document.createElement('div');
+      const viewBtn2 = document.createElement('button');
+      viewBtn2.className='btn ghost'; viewBtn2.textContent='Hiện';
+      viewBtn2.addEventListener('click', ()=> modal.open(`🧩 ${name}`, 'Vai trò tùy chỉnh')); hint.appendChild(viewBtn2);
+
+      const count = document.createElement('input'); count.type='number'; count.min='0'; count.value = countVal;
+      count.addEventListener('change', ()=>{
+        STATE.customRoles[name] = clamp(Number(count.value||0),0,40);
+        if(STATE.customRoles[name]===0) delete STATE.customRoles[name];
+        updateSlotsLeft(); save();
+      });
+
+      const del = document.createElement('div');
+      const delBtn = document.createElement('button'); delBtn.className='btn danger'; delBtn.textContent='Xoá';
+      delBtn.onclick = ()=>{ delete STATE.customRoles[name]; renderRoles(); updateSlotsLeft(); save(); };
+      del.appendChild(delBtn);
+
+      $.rolesList.appendChild(row);
+      row.append(nameDiv, hint, count, del);
+    });
+
+    updateSlotsLeft();
+  }
+
+  function updateSlotsLeft(){
+    const totalPlayers = Number($.playerCount.value||STATE.playerCount);
+    const totalSelected = totalRolesSelected();
+    const left = totalPlayers - totalSelected;
+    $.slotsLeft.textContent = left;
+    $.slotsLeft.style.color = left < 0 ? 'salmon' : '#c7ffee';
+  }
+
+  function totalRolesSelected(){
+    const base = Object.values(STATE.roles||{}).reduce((a,b)=>a+Number(b||0),0);
+    const custom = Object.values(STATE.customRoles||{}).reduce((a,b)=>a+Number(b||0),0);
+    return base + custom;
+  }
+
+  $.addCustomRole.addEventListener('click', ()=>{
+    const name = ($.customRoleName.value||'').trim(); const count = clamp(Number($.customRoleCount.value||1),1,40);
+    if(!name) return alert('Nhập tên vai trò tuỳ chỉnh');
+    STATE.customRoles[name] = (STATE.customRoles[name]||0) + count;
+    $.customRoleName.value=''; $.customRoleCount.value='1';
+    renderRoles(); save();
+  });
+  $.resetRoles.addEventListener('click', ()=>{ STATE.roles = {werewolf:2, seer:1, witch:1}; STATE.customRoles = {}; renderRoles(); save(); });
+
+  // ====== ASSIGNMENT ======
+  $.assignBtn.addEventListener('click', ()=>{
+    const n = Number($.playerCount.value||10);
+    const names = STATE.names.slice(0,n).map((x,i)=> (x||'').trim() || `Người chơi ${i+1}`);
+
+    const parts = [];
+    const addMany = (label,count)=>{ for(let i=0;i<count;i++) parts.push(label); };
+    const roleNameFromKey = k => (DEFAULT_ROLES.find(r=>r.key===k)?.name) || k;
+
+    Object.entries(STATE.roles||{}).forEach(([k,c])=> addMany(roleNameFromKey(k), Number(c||0)));
+    Object.entries(STATE.customRoles||{}).forEach(([name,c])=> addMany(name, Number(c||0)));
+
+    if(parts.length > n){ return alert(`Tổng số vai trò(${parts.length}) vượt quá số người (${n}). Hãy giảm bớt vai trò hoặc tăng số lượng người chơi.`); }
+
+    for(let i=0;i<n-parts.length;i++) parts.push('👨🏻‍🌾 Dân làng');
+
+    const rolesShuffled = shuffle(parts);
+    STATE.assignments = names.map((name, idx)=> ({ name, role: rolesShuffled[idx] }));
+    STATE.reveal = {};
+    STATE.dead = {};
+    renderAssignments();
+    $.reshuffleBtn.disabled = false; $.revealAllBtn.disabled=false; $.copyBtn.disabled=false; $.sortBtn.disabled=false;
+    save();
+  });
+
+  $.reshuffleBtn.addEventListener('click', ()=>{
+    if(!STATE.assignments) return;
+    const roles = STATE.assignments.map(x=>x.role);
+    const names = STATE.assignments.map(x=>x.name);
+    const reshuffled = shuffle(roles);
+    STATE.assignments = names.map((name,i)=>({name, role: reshuffled[i]}));
+    STATE.reveal = {}; renderAssignments(); save();
+  });
+
+  $.revealAllBtn.addEventListener('click', ()=>{
+    const anyHidden = Object.values(STATE.reveal||{}).some(v=>!v);
+    STATE.assignments.forEach((_,i)=> STATE.reveal[i] = anyHidden );
+    renderAssignments(); save();
+  });
+
+  $.copyBtn.addEventListener('click', async ()=>{
+    if(!STATE.assignments) return;
+    const lines = STATE.assignments.map((x,i)=> `${i+1}. ${x.name} — ${x.role}`).join('\n');
+    try{ await navigator.clipboard.writeText(lines); alert('Đã sao chép danh sách vai trò vào clipboard!'); }
+    catch{ alert('Không thể sao chép, hãy chọn thủ công.'); }
+  });
+
+  // ====== SORT & HIGHLIGHT ======
+  function _ascii(s){
+    return String(s).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  }
+  function _roleKey(role){
+    return String(role).replace(/^[^\p{L}\p{N}]+/u,'').trim().toLowerCase();
+  }
+  function factionOf(role){
+    const t = _ascii(role);
+    // Phe Sói
+    if (t.includes('soi con') || t.includes('ke phan boi') || t.includes('soi'))
+      return {order:0, cls:'f-wolf'};
+    // Phe Dân
+    if (t.includes('than tinh yeu')||t.includes('tien tri')||t.includes('phu thuy')||
+        t.includes('tho san')||t.includes('bao ve')||t.includes('phap su cam')||
+        t.includes('dan lang')||t.includes('hoang tu')||t.includes('gia lang')||
+        t.includes('luc si')||t.includes('thi truong'))
+      return {order:1, cls:'f-vil'};
+    // Phe đổi phe
+    if (t.includes('nhan ban')||t.includes('ke bi nguyen'))
+      return {order:2, cls:'f-swap'};
+    // Phe thứ ba / khác
+    if (t.includes('chan doi'))
+      return {order:3, cls:'f-third'};
+    return {order:3, cls:'f-third'};
+  }
+
+  function sortAssignmentsByFactionThenRole(){
+  if (!STATE.assignments || STATE.assignments.length === 0) return;
+
+  // Giữ trạng thái "đã hiện" theo TÊN trước khi sắp xếp
+  const revealByName = {};
+  STATE.assignments.forEach((x, i) => {
+    revealByName[x.name] = !!STATE.reveal[i];
+  });
+
+  // Map đánh dấu chết theo tên (đã set ở STATE.dead)
+  const deadByName = { ...(STATE.dead || {}) };
+
+  STATE.assignments.sort((a, b) => {
+    // 1) Alive trước, Dead sau
+    const aDead = !!deadByName[a.name];
+    const bDead = !!deadByName[b.name];
+    if (aDead !== bDead) return aDead ? 1 : -1;
+
+    // 2) Sắp theo phe
+    const fa = factionOf(a.role);
+    const fb = factionOf(b.role);
+    if (fa.order !== fb.order) return fa.order - fb.order;
+
+    // 3) Cùng phe thì sắp theo alphabet của tên vai trò
+    const ra = _roleKey(a.role);
+    const rb = _roleKey(b.role);
+    return ra.localeCompare(rb, 'vi');
+  });
+
+  // Khôi phục trạng thái "đã hiện" theo vị trí mới
+  STATE.reveal = {};
+  STATE.assignments.forEach((x, i) => {
+    STATE.reveal[i] = !!revealByName[x.name];
+  });
+
+  renderAssignments();
+  save();
+}
+
+function toggleDeadByName(name){
+  STATE.dead = STATE.dead || {};
+  STATE.dead[name] = !STATE.dead[name];
+  renderAssignments(); save();
+}
+
+  function renderAssignments(){
+  if(!STATE.assignments){ $.assignments.innerHTML=''; return; }
+
+  const rows = STATE.assignments.map((x,i)=>{
+    const revealed = !!STATE.reveal[i];
+    const fac = factionOf(x.role);
+    const isDead = !!(STATE.dead && STATE.dead[x.name]);
+    const safeNameAttr = String(x.name).replace(/"/g,'&quot;'); // attr-safe
+    const roleCell = revealed ? escapeHtml(x.role) : '&nbsp;';   // trống khi Ẩn
+
+    return `<tr class="${revealed? 'revealed':''} ${fac.cls} ${isDead?'dead':''}"
+               data-name="${safeNameAttr}">
+      <td>${i+1}</td>
+      <td class="name-cell">
+  <div class="name-wrap">
+    <span class="player-name">${escapeHtml(x.name)}</span>
+    ${isDead ? '<span class="eliminated">– BỊ LOẠI</span>' : ''}
+  </div>
+</td>
+      <td class="role ${revealed? '':'hidden'}">${roleCell}</td>
+      <td class="no-print"><button class="btn ${revealed? '':'ok'}" data-reveal="${i}">
+        ${revealed? 'Ẩn':'Hiện'}
+      </button></td>
+    </tr>`;
+  }).join('');
+
+  $.assignments.innerHTML = `
+  <div class="section-title">
+    <h2>📃 Danh sách phân vai trò</h2>
+    <div class="chip">Tổng: <b>${STATE.assignments.length}</b></div>
+  </div>
+  <div class="table-wrap">
+    <table aria-label="Danh sách phân vai trò">
+      <thead>
+        <tr><th>#</th><th>Tên người chơi</th><th>Vai trò</th>
+        <th class="no-print">Tiết lộ</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+
+  // nút Hiện/Ẩn
+  qsa('[data-reveal]',$.assignments).forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const i = Number(e.currentTarget.getAttribute('data-reveal'));
+      STATE.reveal[i] = !STATE.reveal[i]; renderAssignments(); save();
+    });
+  });
+
+  // double-click / double-tap để toggle “đã chết”
+  qsa('tbody tr', $.assignments).forEach(tr=>{
+    const name = tr.getAttribute('data-name'); // DOM sẽ decode &quot; => "
+    // chặn khi click vào nút
+    tr.addEventListener('dblclick', (e)=>{
+      if (e.target.closest('button')) return;
+      toggleDeadByName(name);
+    });
+    // mobile: double-tap trong ~300ms
+    let lastTap = 0;
+    tr.addEventListener('touchend', (e)=>{
+      if (e.target.closest('button')) return;
+      const now = Date.now();
+      if (now - lastTap < 300){ toggleDeadByName(name); e.preventDefault(); }
+      lastTap = now;
+    }, {passive:false});
+  });
+}
+
+  $.sortBtn.addEventListener('click', sortAssignmentsByFactionThenRole);
+
+  function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s])); }
+
+  // ====== TIMER ======
+  let TICK = null; let remaining = 120; let countingUp=false;
+
+  function setTimerFromInputs(){
+    const min = clamp(Number($.timerMin.value||0),0,999);
+    const sec = clamp(Number($.timerSec.value||0),0,59);
+    $.timerMin.value=min; $.timerSec.value=sec;
+    if($.timerMode.value==='down'){ remaining = min*60 + sec; countingUp=false; }
+    else { remaining = 0; countingUp=true; }
+    updateTimerDisplay();
+    STATE.timer = { ...STATE.timer, mode: $.timerMode.value, min, sec, left: remaining, running:false, sound: $.soundToggle.checked };
+    $.startPauseBtn.textContent='▶︎ Bắt đầu'; save();
+  }
+
+  function updateTimerDisplay(){
+    const sec = Math.max(0, Math.floor(remaining%60));
+    const min = Math.max(0, Math.floor(remaining/60));
+    $.timerDisplay.textContent = `${pad(min)}:${pad(sec)}`;
+  }
+
+  // Thay toàn bộ hàm beep() cũ bằng hàm mới này
+  function beep(times = 5, vol = 0.6, freq = 900, dur = 180, gap = 120){
+    if(!$.soundToggle.checked) return;
+
+    // RUNG: 5 nhịp 200ms, nghỉ 100ms
+    try{ navigator.vibrate && navigator.vibrate([200,100,200,100,200,100,200,100,200]); }catch{}
+
+    // ÂM THANH: nhiều "tút" liền nhau
+    try{
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+
+      let t = ctx.currentTime;
+      for(let i = 0; i < times; i++){
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+
+        // Giữ tiếng "tút" rõ ràng
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, t);
+
+        // Envelope để nghe to nhưng không rè
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(vol, t + 0.02);           // lên nhanh
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur/1000);    // tắt nhanh
+
+        o.start(t);
+        o.stop(t + dur/1000 + 0.01);
+
+        // khoảng nghỉ giữa các "tút"
+        t += (dur + gap) / 1000;
+      }
+
+      // đóng context sau khi phát xong để tiết kiệm pin
+      const total = times*dur + (times-1)*gap + 200;
+      setTimeout(()=>{ try{ ctx.close(); }catch{} }, total);
+    }catch{}
+  }
+
+  function startPause(){
+    if(TICK){ clearInterval(TICK); TICK=null; $.startPauseBtn.textContent='▶︎ Tiếp tục'; STATE.timer.running=false; save(); return; }
+    $.startPauseBtn.textContent='❚❚ Tạm dừng'; STATE.timer.running=true; save();
+    TICK = setInterval(()=>{
+      remaining += countingUp ? 1 : -1;
+      updateTimerDisplay();
+      if(!countingUp && remaining<=0){ clearInterval(TICK); TICK=null; beep(); $.startPauseBtn.textContent='▶︎ Bắt đầu'; STATE.timer.running=false; save(); }
+    }, 1000);
+  }
+
+  function resetTimer(){ clearInterval(TICK); TICK=null; setTimerFromInputs(); }
+
+  $.timerMode.addEventListener('change', setTimerFromInputs);
+  $.timerMin.addEventListener('change', setTimerFromInputs);
+  $.timerSec.addEventListener('change', setTimerFromInputs);
+  $.startPauseBtn.addEventListener('click', startPause);
+  $.resetTimerBtn.addEventListener('click', resetTimer);
+  qsa('[data-preset]').forEach(btn=> btn.addEventListener('click', (e)=>{
+    const s = Number(e.currentTarget.getAttribute('data-preset'))||120;
+    $.timerMode.value='down'; $.timerMin.value = Math.floor(s/60); $.timerSec.value = s%60; setTimerFromInputs();
+  }));
+  $.soundToggle.addEventListener('change', ()=>{ STATE.timer.sound = $.soundToggle.checked; save(); });
+
+  // ====== NOTES ======
+  const notesEl = qs('#notes');
+
+// Tự giãn chiều cao ghi chú theo nội dung
+function autoGrowNotes(){
+  if(!notesEl) return;
+  notesEl.style.height = 'auto';                    // reset
+  notesEl.style.height = Math.max(160, notesEl.scrollHeight) + 'px';
+}
+
+// khi nhập thì tự giãn
+notesEl.addEventListener('input', autoGrowNotes);
+// nếu cửa sổ đổi kích thước (mobile xoay…), tính lại
+window.addEventListener('resize', autoGrowNotes);
+
+  notesEl.addEventListener('input', ()=>{ STATE.notes = notesEl.value; save(); });
+
+  // Nút: Xóa tất cả
+  $.clearNotesBtn.addEventListener('click', ()=>{
+    notesEl.value = '';
+    STATE.notes = '';
+    save();
+    autoGrowNotes();
+    notesEl.focus();
+  });
+
+  // Nút: Soạn mẫu nhanh
+  $.quickTemplateBtn.addEventListener('click', ()=>{
+    const tpl =
+`🐺 Sói _________ Giết:
+🛡️ Bảo vệ ______ Chắn:
+🧙‍♂️ Phù Thủy _____ Cứu:
+🧙‍♂️ Phù Thủy ____ Giết:
+🏹 Thợ săn _____ Ngắm:
+💘 Cupid _______ Ghép:
+👥 Nhân bản ____ Chọn:
+🔇 Pháp sư câm __ Câm: `;
+    notesEl.value = tpl;
+    STATE.notes = tpl;
+    save();
+    autoGrowNotes();
+    // Đưa con trỏ về cuối cho tiện ghi tiếp
+    notesEl.focus();
+    try{
+      notesEl.selectionStart = notesEl.selectionEnd = notesEl.value.length;
+    }catch{}
+  });
+
+  // ====== INIT ======
+  function init(){
+    load();
+    $.playerCount.value = STATE.playerCount;
+    renderNames();
+
+    ensureDefaultRoles();
+    renderRoles();
+
+    if(STATE.assignments){ renderAssignments(); $.reshuffleBtn.disabled=false; $.revealAllBtn.disabled=false; $.copyBtn.disabled=false; $.sortBtn.disabled=false; }
+
+    notesEl.value = STATE.notes||'';
+    autoGrowNotes();
+
+    $.timerMode.value = STATE.timer.mode||'down';
+    $.timerMin.value = STATE.timer.min||0; $.timerSec.value = STATE.timer.sec||0;
+    let remainingLocal = STATE.timer.left || (STATE.timer.mode==='down' ? (STATE.timer.min*60 + STATE.timer.sec): 0);
+    remaining = remainingLocal;
+    countingUp = STATE.timer.mode==='up'; $.soundToggle.checked = !!STATE.timer.sound;
+    updateTimerDisplay();
+    if(STATE.timer.running){ startPause(); }
+
+    updateSlotsLeft();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
