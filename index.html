@@ -1297,7 +1297,7 @@ $.removeEmptyNames.addEventListener('click', () => {
 });
 
   // ====== ROLES UI ======
-  function ensureDefaultRoles(){ if(!STATE.roles || Object.keys(STATE.roles).length===0){ STATE.roles = {werewolf:2, seer:1, witch:1}; } }
+  function ensureDefaultRoles(){ if(!STATE.roles || Object.keys(STATE.roles).length===0){ STATE.roles = {werewolf:3, seer:1, witch:1, hunter:1, guard:1, cupid:1}; } }
 
   function renderRoles(){
     $.rolesList.innerHTML=''; ensureDefaultRoles();
@@ -1382,7 +1382,7 @@ $.removeEmptyNames.addEventListener('click', () => {
     $.customRoleName.value=''; $.customRoleCount.value='1';
     renderRoles(); save();
   });
-  $.resetRoles.addEventListener('click', ()=>{ STATE.roles = {werewolf:2, seer:1, witch:1}; STATE.customRoles = {}; renderRoles(); save(); });
+  $.resetRoles.addEventListener('click', ()=>{ STATE.roles = {werewolf:3, seer:1, witch:1, hunter:1, guard:1, cupid:1}; STATE.customRoles = {}; renderRoles(); save(); });
 
   // ====== ASSIGNMENT ======
   $.assignBtn.addEventListener('click', ()=>{
@@ -1398,9 +1398,13 @@ $.removeEmptyNames.addEventListener('click', () => {
 
     if(parts.length > n){ return alert(`Tổng số vai trò(${parts.length}) vượt quá số người (${n}). Hãy giảm bớt vai trò hoặc tăng số lượng người chơi.`); }
 
-    for(let i=0;i<n-parts.length;i++) parts.push('👨🏻‍🌾 Dân làng');
+    // 🔒 CHỐT 1: lấp ô trống bằng Dân làng
+  while (parts.length < n) parts.push('👨🏻‍🌾 Dân làng');
 
-    const rolesShuffled = shuffle(parts);
+  const rolesShuffled = shuffle(parts);
+
+  // 🔒 CHỐT 2: đảm bảo sau shuffle vẫn đủ n phần tử
+  while (rolesShuffled.length < n) rolesShuffled.push('👨🏻‍🌾 Dân làng');
     STATE.assignments = names.map((name, idx)=> ({ name, role: rolesShuffled[idx] }));
     STATE.reveal = {};
     STATE.dead = {};
@@ -1524,9 +1528,12 @@ function toggleDeadByName(name){
   </div>
 </td>
       <td class="role ${revealed? '':'hidden'}">${roleCell}</td>
-      <td class="no-print"><button class="btn ${revealed? '':'ok'}" data-reveal="${i}">
-        ${revealed? 'Ẩn':'Hiện'}
-      </button></td>
+      <td class="no-print">
+  <button class="btn ${isDead ? '' : 'danger'}" data-kill="${i}">
+    ${isDead ? 'Cứu' : 'Giết'}
+  </button>
+</td>
+
     </tr>`;
   }).join('');
 
@@ -1539,19 +1546,21 @@ function toggleDeadByName(name){
     <table aria-label="Danh sách phân vai trò">
       <thead>
         <tr><th>#</th><th>Tên người chơi</th><th>Vai trò</th>
-        <th class="no-print">Tiết lộ</th></tr>
+        <th class="no-print">Giết</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
 
-  // nút Hiện/Ẩn
-  qsa('[data-reveal]',$.assignments).forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
-      const i = Number(e.currentTarget.getAttribute('data-reveal'));
-      STATE.reveal[i] = !STATE.reveal[i]; renderAssignments(); save();
-    });
+  // Bấm nút Giết/Hồi sinh (toggle "đã chết")
+qsa('[data-kill]', $.assignments).forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const i = Number(e.currentTarget.getAttribute('data-kill'));
+    const name = STATE.assignments[i]?.name;
+    if (!name) return;
+    toggleDeadByName(name);     // đã có sẵn trong mã
   });
+});
 
   // double-click / double-tap để toggle “đã chết”
   qsa('tbody tr', $.assignments).forEach(tr=>{
@@ -1597,7 +1606,7 @@ function toggleDeadByName(name){
   }
 
   // Thay toàn bộ hàm beep() cũ bằng hàm mới này
-  function beep(times = 5, vol = 0.6, freq = 900, dur = 180, gap = 120){
+  function beep(times = 5, vol = 1.0, freq = 900, dur = 180, gap = 120){
     if(!$.soundToggle.checked) return;
 
     // RUNG: 5 nhịp 200ms, nghỉ 100ms
