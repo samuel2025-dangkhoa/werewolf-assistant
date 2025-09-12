@@ -1059,7 +1059,7 @@ header {
         </div>
         <div id="customRoleActions" class="row">
           <button class="btn" id="addCustomRole">+ Thêm vai trò</button>
-          <button class="btn ghost" id="resetRoles" title="Đưa vai trò về mặc định">Mặc định</button>
+          <button class="btn ghost" id="resetRoles" title="Đưa vai trò về mặc định">Mặc định: 10👤</button>
         </div>
       </div>
 
@@ -1212,23 +1212,23 @@ header {
 
   // Default roles
   const DEFAULT_ROLES = [
-    { key:'cupid', name:'💘 Thần tình yêu', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi ( được phép chọn cả mình). Hai người được chọn sẽ trở thành 2 người yêu nhau. Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo.', color:'#e91e63' },
+    { key:'cupid', name:'💘 Cupid', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi ( được phép chọn cả mình). Hai người được chọn sẽ trở thành 2 người yêu nhau. Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo.', color:'#e91e63' },
     { key:'werewolf', name:'🐺 Sói', hint:'Vào ban đêm, Ma sói sẽ tỉnh dậy cùng nhau và thống nhất giết 1 nạn nhận nào đó. Sói có thể không giết người nào và không được giết sói khác.', color:'#d32f2f' },
     { key:'werecub', name:'🐺 Sói con', hint:'Sói con là Sói và thức dậy cùng Sói mỗi đêm. Nếu Sói con bị giết, Sói còn lại sẽ giết 2 người vào đêm hôm sau. Sói có thể chọn giết Sói Con như 1 sự hy sinh ( Tất cả Sói bao gồm cả Sói con đều đồng ý việc đó). Khi đó Sói có thể lập tức giết 2 người chơi khác vào ngay đêm hôm đó.', color:'#ff7043' },
-    { key:'minion', name:'🎭️ Kẻ phản bội', hint:'Phản bội thức dậy cùng Sói và biết Sói là ai. Tham gia cùng Sói để giết Dân làng. Tuy nhiên Tiên tri khi soi vào Phản bội thì vẫn ra dân làng.', color:'#6d4c41' },
+    { key:'minion', name:'🎭️ Phản bội', hint:'Phản bội thức dậy cùng Sói và biết Sói là ai. Tham gia cùng Sói để giết Dân làng. Tuy nhiên Tiên tri khi soi vào Phản bội thì vẫn ra dân làng.', color:'#6d4c41' },
     { key:'seer', name:'🔮 Tiên tri', hint:'Mỗi đêm, Tiên tri chỉ tay vào một người. Quản trò sẽ cho Tiên tri biết người đó có phải là Ma sói hay không.', color:'#3f51b5' },
-    { key:'witch', name:'🧙‍♂️ Phù thuỷ', hint:'Phù thủy sẽ có hai bình thuốc. Một bình thuốc để cứu 1 người và một bình thuốc để giết 1 người. Trong đêm, Quản trò sẽ cho Phù Thủy biết ai sẽ bị giết trong đêm và hỏi xem Phù thủy có muốn sử dụng quyền năng nào hay không. Có thể dùng cả hai bình thuốc này vào cùng 1 đêm, nhưng mỗi bình chỉ dùng một lần.', color:'#9c27b0' },
-    { key:'hunter', name:'🏹 Thợ săn', hint:'Nếu thợ săn chết, hắn lập tức được phép nhắm vào một người và người này sẽ bị chết. Nếu thợ săn chết trong đêm, Quản trò sẽ đụng vai Thợ săn để báo Thợ săn nhắm bắn.', color:'#ff9800' },
-    { key:'guard', name:'🛡️ Bảo vệ', hint:'Mỗi đêm, Bảo vệ chọn một người khác nhau để bảo vệ. Người chơi này sẽ bất tử vào đêm đó (nhưng không thể bảo vệ khỏi Phù Thủy).', color:'#4caf50' },
-    { key:'spellcaster', name:'🔇 Pháp sư câm', hint:'Mỗi đêm, Pháp sư câm sẽ được phép chỉ định 1 người bị câm vào hôm sau. Người này vào ngày hôm sau sẽ không được nói. ', color:'#009688' },
+    { key:'witch', name:'🧙‍♂️ Phù thuỷ', hint:'Phù thủy sẽ có hai bình thuốc. Một bình thuốc để cứu 1 người và một bình thuốc để giết 1 người. Trong đêm, Quản trò sẽ cho Phù thủy biết ai sẽ bị giết trong đêm và hỏi xem Phù thủy có muốn sử dụng quyền năng nào hay không. Có thể dùng cả hai bình thuốc này vào cùng 1 đêm, nhưng mỗi bình chỉ dùng một lần.', color:'#9c27b0' },
+    { key:'hunter', name:'🏹 Thợ săn', hint:'Nếu Thợ săn chết, hắn lập tức được phép nhắm vào một người và người này sẽ bị chết. Nếu Thợ săn chết trong đêm, Quản trò sẽ đụng vai Thợ săn để báo Thợ săn nhắm bắn.', color:'#ff9800' },
+    { key:'guard', name:'🛡️ Bảo vệ', hint:'Mỗi đêm, Bảo vệ chọn một người khác nhau để bảo vệ. Người chơi này sẽ bất tử vào đêm đó (nhưng không thể bảo vệ khỏi Phù thủy).', color:'#4caf50' },
+    { key:'spellcaster', name:'🔇 Nguyệt nữ', hint:'Mỗi đêm, Nguyệt nữ sẽ được phép chỉ định 1 người bị câm vào hôm sau. Người này vào ngày hôm sau sẽ không được nói (nếu người bị câm lỡ nói thì sẽ bị loại ngay lập tức). ', color:'#009688' },
     { key:'doppelganger', name:'👥 Nhân bản', hint:'Vào đêm đầu tiên, Nhân bản tỉnh dậy và lựa chọn một người chơi. Nếu người chơi kia chết trong đêm, Nhân bản sẽ bí mật lấy chức năng của người đó. Trước khi có chức năng mới, Nhân bản theo Phe dân. Sau khi có chức năng mới, Nhân bản theo phe của chức năng này. ', color:'#607d8b' },
-    { key:'cursed', name:'🌑 Kẻ bị nguyền', hint:'Kẻ bị Nguyền rủa ban đầu là người, Tiên tri soi cũng ra người. Nếu Kẻ bị Nguyền rủa bị Sói cắn thì sẽ không chết, mà từ đêm tiếp theo sẽ biến thành Sói, đồng thời nếu Tiên tri sói thì cũng sẽ là Sói. Kẻ bị Nguyền rủa mỗi đêm được gọi dậy riêng biệt, kể cả sau khi hóa Sói, để cho người này biết đã bị hóa Sói hay chưa. ', color:'#673ab7' },
+    { key:'cursed', name:'🌑 Bị nguyền', hint:'Bị nguyền ban đầu là người, Tiên tri soi cũng ra người. Nếu Bị nguyền bị Sói cắn thì sẽ không chết, mà từ đêm tiếp theo sẽ biến thành Sói, đồng thời nếu Tiên tri sói thì cũng sẽ là Sói. Bị nguyền mỗi đêm được gọi dậy riêng biệt, kể cả sau khi hóa Sói, để cho người này biết đã bị hóa Sói hay chưa. ', color:'#673ab7' },
     { key:'tanner', name:'😓 Chán đời', hint:'Chán đời chỉ thắng khi anh ta bị giết. Các điều kiện thắng khác cũng được áp dụng. ', color:'#795548' },
-    { key:'village', name:'👨🏻‍🌾 Dân làng', hint:'Không có tính năng đặc biệt nào cả, ngủ suốt đêm và tham gia biểu quyết tìm Sói vào ban ngày. ', color:'#8bc34a' },
+    { key:'village', name:'👨🏻‍🌾 Dân làng', hint:'Không có tính năng đặc biệt nào cả, ngủ suốt đêm và tham gia biểu quyết tìm Ma sói vào ban ngày. ', color:'#8bc34a' },
     { key:'prince', name:'👑 Hoàng tử', hint:'Hoàng tử không thể bị treo cổ chết. Vào lần bị vote chết và chuẩn bị treo cổ, người này sẽ lật lá bài lên để mọi người được thấy và không phải chịu treo cổ. Tất cả người chơi lập tức đi ngủ. ', color:'#fbc02d' },
     { key:'elder', name:'👴 Già làng', hint:'Già làng có 2 mạng sống. Nếu chết cả 2 lần thì các quyền năng (tiên tri, bảo vệ,…) của nhân vật khác sẽ mất đi.', color:'#ffffff' },
     { key:'tough guy', name:'💪 Lực sĩ', hint:'Nếu bị Sói cắn, Lực sĩ sẽ chết vào đêm tiếp theo chứ không phải ngay tại đêm đó.', color:'#c2185b' },
-    { key:'mayor', name:'⭐ Thị trưởng', hint:'Phiếu biểu quyết của Thị trường được tính là 2 phiếu khi biểu quyết treo cổ.', color:'#03a9f4' },
+    { key:'mayor', name:'⭐ Thị trưởng', hint:'Phiếu biểu quyết của Thị trưởng được tính là 2 phiếu khi biểu quyết treo cổ.', color:'#03a9f4' },
   ];
 
   const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
@@ -1297,7 +1297,7 @@ $.removeEmptyNames.addEventListener('click', () => {
 });
 
   // ====== ROLES UI ======
-  function ensureDefaultRoles(){ if(!STATE.roles || Object.keys(STATE.roles).length===0){ STATE.roles = {werewolf:3, seer:1, witch:1, hunter:1, guard:1, cupid:1}; } }
+  function ensureDefaultRoles(){ if(!STATE.roles || Object.keys(STATE.roles).length===0){ STATE.roles = {werewolf:3, seer:1, witch:1, hunter:1, guard:1, cupid:1, spellcaster:1, prince:1}; } }
 
   function renderRoles(){
     $.rolesList.innerHTML=''; ensureDefaultRoles();
@@ -1340,7 +1340,7 @@ $.removeEmptyNames.addEventListener('click', () => {
       const hint = document.createElement('div');
       const viewBtn2 = document.createElement('button');
       viewBtn2.className='btn ghost'; viewBtn2.textContent='Hiện';
-      viewBtn2.addEventListener('click', ()=> modal.open(`🧩 ${name}`, 'Vai trò tùy chỉnh')); hint.appendChild(viewBtn2);
+      viewBtn2.addEventListener('click', ()=> modal.open(`🧩 ${name}`, 'Vai trò tùy chỉnh: Chức năng của vai trò tủy chỉnh này sẽ do quản trò & làng thống nhất đưa ra.')); hint.appendChild(viewBtn2);
 
       const count = document.createElement('input'); count.type='number'; count.min='0'; count.value = countVal;
       count.addEventListener('change', ()=>{
@@ -1382,7 +1382,7 @@ $.removeEmptyNames.addEventListener('click', () => {
     $.customRoleName.value=''; $.customRoleCount.value='1';
     renderRoles(); save();
   });
-  $.resetRoles.addEventListener('click', ()=>{ STATE.roles = {werewolf:3, seer:1, witch:1, hunter:1, guard:1, cupid:1}; STATE.customRoles = {}; renderRoles(); save(); });
+  $.resetRoles.addEventListener('click', ()=>{ STATE.roles = {werewolf:3, seer:1, witch:1, hunter:1, guard:1, cupid:1, spellcaster:1, prince:1}; STATE.customRoles = {}; renderRoles(); save(); });
 
   // ====== ASSIGNMENT ======
   $.assignBtn.addEventListener('click', ()=>{
@@ -1704,7 +1704,7 @@ window.addEventListener('resize', autoGrowNotes);
 🏹 Thợ săn _____ Ngắm:
 💘 Cupid _______ Ghép:
 👥 Nhân bản ____ Chọn:
-🔇 Pháp sư câm __ Câm: `;
+🔇 Nguyệt nữ ____ Câm: `;
     notesEl.value = tpl;
     STATE.notes = tpl;
     save();
