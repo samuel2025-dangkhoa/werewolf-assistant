@@ -274,7 +274,40 @@ textarea{
   white-space: pre-wrap; text-align: justify; text-wrap: pretty; hyphens: auto;
 }
 
+/* Thân modal kho lưu – cùng phong cách với roleModal */
+#notesArchiveBody{
+  background: rgba(8,12,28,.72);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 0 0 12px 12px;
+  padding: 14px 16px;
+  color: var(--text);
+  line-height: 1.8;
+  white-space: normal;
+}
+
+/* Danh sách bản lưu */
+.archive-list{ display:flex; flex-direction:column; gap:12px; }
+.archive-item{ border:1px solid var(--border); border-radius:10px; padding:10px; background:#0c0f1f; }
+.archive-meta{ font-size:12px; color:#a5b4fc; margin-bottom:6px; }
+.archive-content{
+  white-space:pre-wrap;              /* giữ xuống dòng */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  background:#0b0e1d; border:1px solid var(--border);
+  padding:10px; border-radius:8px;
+}
+
+/* Hàng nút ở đáy modal */
+.archive-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+
     .modal .close{ border:1px solid var(--border); background:#11152b; color:var(--text); border-radius:10px; padding:8px 12px; cursor:pointer }
+
+.archive-list{display:grid;gap:10px;max-height:50vh;overflow:auto}
+.archive-item{background:#0c0f1f;border:1px solid var(--border);border-radius:10px;padding:10px}
+.archive-meta{font-size:12px;color:var(--muted)}
+.archive-content{white-space:pre-wrap}
+.archive-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 
     /* Label “Số người chơi” không bẻ dòng */
     label[for="playerCount"]{ white-space:nowrap }
@@ -1029,6 +1062,161 @@ header {
 @media (max-width:420px){
   .donate .qr{ width:180px; }
 }
+
+/* Promo handmade: ảnh trái, 2 dòng phải */
+.donate-promo{
+  display:flex; align-items:center; gap:12px;
+  margin-top:12px;
+  background:#0c0f1f; border:1px solid var(--border);
+  border-radius:12px; padding:10px;
+}
+.donate-promo .promo-photo{
+  width:140px; aspect-ratio:4/3; object-fit:cover;
+  border-radius:10px; flex:0 0 auto;
+}
+.donate-promo .promo-text{ flex:1 1 auto; }
+.donate-promo .promo-text p{ margin:0 0 6px; line-height:1.5; }
+.donate-promo a{
+  color:#dbeafe; text-decoration:underline;
+  overflow-wrap:anywhere;
+}
+
+/* Nếu màn rất hẹp, vẫn giữ bố cục trái–phải gọn */
+@media (max-width:420px){
+  .donate-promo .promo-photo{ width:120px; }
+  .donate-promo .promo-text p{ font-size:15px; }
+}
+
+/* Center + màu giống "NGÂN HÀNG TMCP QUÂN ĐỘI" */
+.donate-promo .promo-text { text-align: center; }
+
+.donate-promo .promo-title{
+  margin: 0 0 6px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: var(--muted);          /* cùng màu label ngân hàng */
+}
+
+.donate-promo .promo-line{
+  margin: 0;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.donate-promo .promo-link{ margin: 6px 0 0; }
+.donate-promo .promo-link a{
+  color: var(--muted) !important; /* link trung màu với tiêu đề ngân hàng */
+  text-decoration: underline;
+}
+
+/* Ảnh cao hơn một chút */
+.donate-promo .promo-photo{
+  width: 160px;
+  height: 140px;               /* tăng chiều cao */
+  aspect-ratio: auto !important;/* vô hiệu tỉ lệ cũ 4/3 */
+  object-fit: cover;
+  border-radius: 10px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 420px){
+  .donate-promo .promo-photo{
+    width: 140px;
+    height: 120px;
+  }
+}
+
+/* Xếp dọc & căn giữa toàn bộ khối */
+.donate-promo{
+  display: flex;
+  flex-direction: column;   /* <- đổi từ hàng sang cột */
+  align-items: center;
+  gap: 10px;
+  text-align: center;       /* mọi dòng chữ căn giữa */
+}
+
+/* Dòng tiêu đề – đậm, cùng màu với “NGÂN HÀNG TMCP QUÂN ĐỘI” */
+.donate-promo .promo-title{
+  margin: 0;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: var(--muted);
+}
+
+/* Dòng mô tả dưới tiêu đề */
+.donate-promo .promo-line{ margin: 0; line-height: 1.5; }
+
+/* Ảnh: căn giữa và cao hơn chút */
+.donate-promo .promo-photo{
+  display: block;
+  width: 240px;          /* có thể chỉnh 220–280 tuỳ thích */
+  height: 160px;         /* “cao hơn xíu” */
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 4px auto 0;
+}
+
+/* Link: căn giữa + màu giống tiêu đề ngân hàng */
+.donate-promo .promo-link{ margin: 0; }
+.donate-promo .promo-link a{
+  color: var(--muted) !important;
+  text-decoration: underline;
+  word-break: break-word;
+}
+
+@media (max-width: 420px){
+  .donate-promo .promo-photo{ width: 210px; height: 145px; }
+}
+
+/* === Donate promo: tweak per request === */
+
+/* 1) Tiêu đề: lớn hơn ~2 cỡ, giữ màu như "NGÂN HÀNG TMCP QUÂN ĐỘI" */
+.donate-promo .promo-title{
+  font-size: clamp(22px, 5.2vw, 24px); /* tăng size */
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: #ba0000;                 /* màu giống dòng ngân hàng */
+  text-align: center;
+  margin: 0;
+}
+
+/* 2) Dòng mô tả: căn giữa (Ctrl + E), đọc dễ hơn */
+.donate-promo .promo-line{
+  margin: 0 auto 6px;
+  text-align: justify;                  /* căn giữa */
+  max-width: 640px;                    /* giới hạn độ dài để dễ đọc */
+  line-height: 1.6;
+}
+
+/* 3) Ảnh: rộng hơn một xíu */
+.donate-promo .promo-photo{
+  width: 280px;                        /* trước ~240px -> nới rộng */
+  height: 180px;                       /* giữ tỉ lệ, có thể chỉnh 170–190 */
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  margin: 4px auto 0;                  /* luôn căn giữa */
+}
+
+/* Mobile vẫn to hơn chút nhưng vừa màn */
+@media (max-width: 420px){
+  .donate-promo .promo-photo{
+    width: 260px;
+    height: 172px;
+  }
+}
+
+/* Link: đã căn giữa sẵn, giữ màu giống tiêu đề ngân hàng */
+.donate-promo .promo-link{ margin: 0; text-align: center; }
+.donate-promo .promo-link a{
+  color: var(--muted) !important;
+  text-decoration: underline;
+  word-break: break-word;
+}
+
 /* --- Header "Thiết lập vai trò" gọn trên mobile --- */
 @media (max-width: 560px){
   .section-title.roles-head{
@@ -1161,6 +1349,44 @@ header {
   font-weight: 700;
   letter-spacing: .2px;
 }
+
+/* === Ghi chú: màu riêng cho 2 nút === */
+#quickTemplateBtn{
+  background: #0f1f3a !important;   /* xanh lam đậm */
+  border-color: #244b8a !important;
+  color: #dbeafe !important;
+}
+#quickTemplateBtn:hover{
+  background: #152a57 !important;
+  border-color: #2e60b3 !important;
+}
+
+#saveNotesBtn{
+  background: #0d2a22 !important;   /* xanh lục đậm */
+  border-color: #13493b !important;
+  color: #c7ffee !important;
+}
+#saveNotesBtn:hover{
+  background: #123628 !important;
+  border-color: #17604e !important;
+}
+/* Nút "Cứu" trong hàng đã bị loại: xanh lục + không mờ */
+.assignments tr.dead td .btn{
+  background: #0d2a22 !important;   /* xanh lục đậm */
+  border-color: #13493b !important;
+  color: #c7ffee !important;
+  opacity: 1 !important;            /* bỏ làm mờ */
+  filter: none !important;          /* bỏ giảm sáng */
+}
+.assignments tr.dead td .btn:hover{
+  background: #123628 !important;
+  border-color: #17604e !important;
+}
+
+@media (max-width: 480px){
+  .promo-title{ font-size: clamp(22px, 5.4vw, 28px); } /* mobile to hơn */
+}
+
   </style>
 </head>
 <body>
@@ -1187,7 +1413,7 @@ header {
       <div class="row wrap" id="playerSetupRow">
         <div class="grow">
           <label for="playerCount">Số người chơi</label>
-          <input id="playerCount" type="number" min="3" max="40" value="10" />
+          <input id="playerCount" type="number" min="3" max="151" value="10" />
         </div>
         <div class="row" style="gap:8px; align-items:flex-end">
           <div>
@@ -1303,6 +1529,8 @@ header {
       <div class="notes-tools no-print">
         <button class="btn danger" id="clearNotesBtn">🗑️ Xóa tất cả</button>
         <button class="btn" id="quickTemplateBtn">✍️ Soạn mẫu nhanh</button>
+        <button class="btn" id="saveNotesBtn">💿️ Lưu</button>
+        <button class="btn" id="openArchiveBtn">📁 Kho lưu trữ</button>
       </div>
       <textarea id="notes" placeholder="Ghi chú: ai bị treo cổ, ai bị sói cắn, lá phiếu, v.v."></textarea>
 
@@ -1310,7 +1538,7 @@ header {
 <div class="donate no-print">
   <div class="donate-title" role="heading" aria-level="2">
   <div class="lines">
-    <div class="line1">❤ Ủng hộ tôi vài gói mì tôm ❤</div>
+    <div class="line1">❤ ỦNG HỘ TÔI VÀI GÓI MÌ TÔM ❤</div>
     <div class="line2">(nếu bạn muốn)</div>
   </div>
 </div>
@@ -1331,6 +1559,23 @@ header {
       </div>
     </div>
   </div>
+<div class="donate-promo">
+  <div class="promo-text">
+    <p class="promo-title">❤ HOẶC ỦNG HỘ BẰNG CÁCH ❤</p>
+    <p class="promo-line">Order các đồ len Handmade siêu xinh và cực kì đáng iu với giá cả vô cùng yêu thương ở link Facebook phía dưới:</p>
+  </div>
+
+  <!-- ẢNH: căn giữa -->
+  <img class="promo-photo" src="https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/pr.png" alt="Đồ len handmade dễ thương">
+
+  <!-- LINK: căn giữa + màu như tiêu đề ngân hàng -->
+  <p class="promo-link">
+    <a href="https://www.facebook.com/phuoc.hanh.543792" target="_blank" rel="noopener">
+      facebook.com/phuoc.hanh.543792
+    </a>
+  </p>
+</div>
+  </div>
 </div>
 
     </aside>
@@ -1348,6 +1593,19 @@ header {
       <div class="content" id="roleModalBody"></div>
     </div>
   </div>
+
+<!-- Modal kho lưu ghi chép -->
+<div id="notesArchiveModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal" role="document">
+    <header>
+      <h3 id="notesArchiveTitle">📁 Kho lưu trữ</h3>
+      <button class="close" id="notesArchiveClose">Đóng</button>
+    </header>
+    <div class="content" id="notesArchiveBody">
+      <!-- Nội dung render bằng JS -->
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -1386,6 +1644,8 @@ header {
     // Notes buttons
     clearNotesBtn: qs('#clearNotesBtn'),
     quickTemplateBtn: qs('#quickTemplateBtn'),
+    saveNotesBtn: qs('#saveNotesBtn'),        
+    openArchiveBtn: qs('#openArchiveBtn'),
   };
 
 // --- Auto sort sau khi "Giết"
@@ -1428,40 +1688,54 @@ function scheduleAutoSort(){
     reveal: {},         // {index: bool}
     dead: {},
     notes: '',
+    notesArchive: [],   // mảng các bản lưu {id, timeISO, content}
+    notesSaveSeq: 0,    // số lần đã lưu (đánh số #)
     timer: {mode:'down', min:2, sec:0, running:false, left:120, sound:true},
   };
 
   // Default roles
   const DEFAULT_ROLES = [
-    { key:'cupid', name:'💘 Cupid', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi ( được phép chọn cả mình). Hai người được chọn sẽ trở thành 2 người yêu nhau. Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo. Nếu ghép trúng 2 phe trái nhau thì 2 người chơi sẽ trở thành phe thứ 3 và dành chiến thắng khi họ là người cuối cùng còn sống sót.', color:'#10b981' },
-    { key:'werewolf', name:'🐺 Ma sói', hint:'Vào ban đêm, Ma sói sẽ tỉnh dậy cùng nhau và thống nhất giết 1 nạn nhận nào đó. Sói có thể không giết người nào và không được giết sói khác.', color:'#ef4444' },
-    { key:'werecub', name:'🐺 Sói con', hint:'Sói con là Sói và thức dậy cùng Sói mỗi đêm. Nếu Sói con bị giết, Sói còn lại sẽ giết 2 người vào đêm hôm sau. Sói có thể chọn giết Sói Con như 1 sự hy sinh ( Tất cả Sói bao gồm cả Sói con đều đồng ý việc đó). Khi đó Sói có thể lập tức giết 2 người chơi khác vào ngay đêm hôm đó.', color:'#ef4444' },
-    { key:'minion', name:'🎭️ Phản bội', hint:'Phản bội thức dậy cùng Sói và biết Sói là ai. Tham gia cùng Sói để giết Dân làng. Tuy nhiên Tiên tri khi soi vào Phản bội thì vẫn ra dân làng.', color:'#ef4444' },
-    { key:'seer', name:'🔮 Tiên tri', hint:'Mỗi đêm, Tiên tri chỉ tay vào một người. Quản trò sẽ cho Tiên tri biết người đó có phải là Ma sói hay không.', color:'#3b82f6' },
-    { key:'witch', name:'🧙‍♂️ Phù thuỷ', hint:'Phù thủy sẽ có hai bình thuốc. Một bình thuốc để cứu 1 người và một bình thuốc để giết 1 người. Trong đêm, Quản trò sẽ cho Phù thủy biết ai sẽ bị giết trong đêm và hỏi xem Phù thủy có muốn sử dụng quyền năng nào hay không. Có thể dùng cả hai bình thuốc này vào cùng 1 đêm, nhưng mỗi bình chỉ dùng một lần.', color:'#3b82f6' },
-    { key:'hunter', name:'🏹 Thợ săn', hint:'Nếu Thợ săn chết, hắn lập tức được phép nhắm vào một người và người này sẽ bị chết. Nếu Thợ săn chết trong đêm, Quản trò sẽ đụng vai Thợ săn để báo Thợ săn nhắm bắn.', color:'#3b82f6' },
+    { key:'cupid', name:'💘 Cupid', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi để ghép đôi( được phép chọn cả mình). Hai người được chọn sẽ thức dậy, nhận diện và trao đổi vai trò cho nhau nhưng không biết ai là người ghép đôi( trừ khi chính Cupid chọn bản thân là người được ghép đôi). Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo. Nếu ghép trúng 2 phe trái nhau thì 2 người chơi sẽ trở thành phe thứ 3 hoàn toàn mới và dành chiến thắng khi họ là người cuối cùng còn sống sót.', color:'#10b981' },
+    { key:'werewolf', name:'🐺 Ma sói', hint:'Vào mỗi đêm, Ma sói sẽ tỉnh dậy cùng nhau và thống nhất giết 1 người chơi. Bầy sói có thể không giết người nào và không được giết sói khác. Ma sói chiến thắng khi số Dân làng < hoặc = số Ma sói và không còn Sói trắng.', color:'#ef4444' },
+    { key:'werecub', name:'🐺 Sói con', hint:'Sói con thức dậy cùng bầy sói mỗi đêm. Nếu Sói con bị giết, Ma sói còn lại sẽ giết 2 người vào đêm hôm sau. Bầy sói có thể chọn giết Sói con như 1 sự hy sinh( Tất cả bầy sói bao gồm cả Sói con đều đồng ý việc đó). Khi đó bầy sói có thể lập tức giết 2 người chơi khác vào ngay đêm hôm đó.', color:'#ef4444' },
+    { key:'minion', name:'🎭️ Phản bội', hint:'Phản bội thức dậy cùng bầy sói. Tham gia cùng bầy sói để giết Dân làng. Tuy nhiên tiên tri khi soi vào phản bội thì vẫn ra Dân làng.', color:'#ef4444' },
+    { key:'seer', name:'🔮 Tiên tri', hint:'Mỗi đêm, Tiên tri chỉ tay vào một người. Quản trò sẽ cho biết người đó có phải là Ma sói hay không.', color:'#3b82f6' },
+    { key:'witch', name:'🧙‍♂️ Phù thuỷ', hint:'Phù thủy sẽ có hai bình thuốc. Một bình thuốc để cứu 1 người và một bình thuốc để giết 1 người. Trong đêm, Quản trò sẽ cho biết ai sẽ bị giết trong đêm và hỏi xem Phù thủy có muốn sử dụng quyền năng nào hay không. Có thể dùng cả hai bình thuốc này vào cùng 1 đêm, nhưng mỗi bình chỉ dùng một lần.', color:'#3b82f6' },
+    { key:'hunter', name:'🏹 Thợ săn', hint:'Nếu Thợ săn chết, hắn lập tức được phép nhắm vào một người và người này sẽ bị chết. Nếu Thợ săn chết trong đêm, Quản trò sẽ đụng vai để báo cho THỢ SĂN nhắm bắn.', color:'#3b82f6' },
     { key:'guard', name:'🛡️ Bảo vệ', hint:'Mỗi đêm, Bảo vệ chọn một người khác nhau để bảo vệ. Người chơi này sẽ bất tử vào đêm đó (nhưng không thể bảo vệ khỏi Phù thủy).', color:'#3b82f6' },
     { key:'spellcaster', name:'🔇 Nguyệt nữ', hint:'Mỗi đêm, Nguyệt nữ sẽ được phép chỉ định 1 người bị câm vào hôm sau. Người này vào ngày hôm sau sẽ không được nói (nếu người bị câm lỡ nói thì sẽ bị loại ngay lập tức). ', color:'#3b82f6' },
-    { key:'doppelganger', name:'👥 Nhân bản', hint:'Vào đêm đầu tiên, Nhân bản tỉnh dậy và lựa chọn một người chơi. Nếu người chơi kia chết trong đêm, Nhân bản sẽ bí mật lấy chức năng của người đó. Trước khi có chức năng mới, Nhân bản theo Phe dân. Sau khi có chức năng mới, Nhân bản theo phe của chức năng này. ', color:'#10b981' },
-    { key:'cursed', name:'🌑 Bị nguyền', hint:'Bị nguyền ban đầu là người, Tiên tri soi cũng ra người. Nếu Bị nguyền bị Sói cắn thì sẽ không chết, mà từ đêm tiếp theo sẽ biến thành Sói, đồng thời nếu Tiên tri sói thì cũng sẽ là Sói. Bị nguyền mỗi đêm được gọi dậy riêng biệt, kể cả sau khi hóa Sói, để cho người này biết đã bị hóa Sói hay chưa. ', color:'#10b981' },
-    { key:'tanner', name:'😓 Chán đời', hint:'Chán đời chỉ thắng khi anh ta bị giết. Các điều kiện thắng khác cũng được áp dụng. ', color:'#eab308' },
+    { key:'doppelganger', name:'👥 Nhân bản', hint:'Vào đêm đầu tiên, Nhân bản tỉnh dậy và lựa chọn một người chơi. Nếu người chơi kia chết, Nhân bản sẽ bí mật lấy chức năng của người đó. Trước khi có chức năng mới, Nhân bản theo phe dân. Sau khi có chức năng mới, Nhân bản theo phe của chức năng này. ', color:'#10b981' },
+    { key:'cursed', name:'🌑 Bị nguyền', hint:'Bị nguyền ban đầu là người, Tiên tri soi cũng ra người. Nếu Bị nguyền bị Ma sói cắn thì sẽ không chết, mà từ đêm tiếp theo sẽ biến thành Ma sói, đồng thời nếu Tiên tri sói thì cũng sẽ là Sói. Bị nguyền mỗi đêm được gọi dậy riêng biệt, kể cả sau khi hóa Sói, để cho người này biết đã bị hóa Sói hay chưa. ', color:'#10b981' },
+    { key:'tanner', name:'😓 Chán đời', hint:'Chán đời chỉ thắng khi anh ta bị treo cổ vào ban ngày. Các điều kiện thắng khác cũng được áp dụng. Chức năng này đi chung với lá bài Yêu hòa bình.', color:'#eab308' },
     { key:'village', name:'👨🏻‍🌾 Dân làng', hint:'Không có tính năng đặc biệt nào cả, ngủ suốt đêm và tham gia biểu quyết tìm Ma sói vào ban ngày. ', color:'#3b82f6' },
     { key:'prince', name:'👑 Hoàng tử', hint:'Hoàng tử không thể bị treo cổ chết. Vào lần bị vote chết và chuẩn bị treo cổ, người này sẽ lật lá bài lên để mọi người được thấy và không phải chịu treo cổ. Tất cả người chơi lập tức đi ngủ. ', color:'#3b82f6' },
-    { key:'elder', name:'👴 Già làng', hint:'Già làng có 2 mạng sống. Nếu chết cả 2 lần thì các quyền năng (tiên tri, bảo vệ,…) của nhân vật khác sẽ mất đi.', color:'#3b82f6' },
-    { key:'tough guy', name:'💪 Lực sĩ', hint:'Nếu bị Sói cắn, Lực sĩ sẽ chết vào đêm tiếp theo chứ không phải ngay tại đêm đó.', color:'#3b82f6' },
+    { key:'elder', name:'👴 Già làng', hint:'Già làng có 2 mạng sống. Nếu chết cả 2 lần thì các quyền năng (Tiên tri, Bảo vệ,…) của nhân vật khác sẽ mất đi trong 2 đêm.', color:'#3b82f6' },
+    { key:'tough guy', name:'💪 Lực sĩ', hint:'Nếu bị Ma sói cắn, Lực sĩ sẽ chết vào đêm tiếp theo chứ không phải ngay tại đêm đó.', color:'#3b82f6' },
     { key:'mayor', name:'⭐ Thị trưởng', hint:'Phiếu biểu quyết của Thị trưởng được tính là 2 phiếu khi biểu quyết treo cổ.', color:'#3b82f6' },
 
-{ key:'pssoi', name:'☄️ Pháp sư sói', hint:'Mỗi đêm, Pháp sư sói thức dậy và sẽ đi tìm kiếm Tiên tri bằng cách chỉ thị một người, Quản trò sẽ cho biết đó có phải Tiên tri hay không. Sói không được biết Pháp sư Sói là ai  và Pháp sư sói cũng không biết Sói là ai. Tiên tri sẽ soi Pháp sư sói là người.', color:'#ef4444' },
-{ key:'soidc', name:'💢 Sói đại ca', hint:'Thức dậy cùng Ma sói. Chừng nào Sói đại ca còn tồn tại trong trò chơi thì mỗi đêm phe Ma sói có thể giết hai người chơi, miễn là hai người chơi đó ngồi cạnh nhau. Tuy nhiên Phe Ma sói sẽ không biết ai là Sói đại ca. Đêm đầu tiên, Sói đại ca sẽ thức dậy một mình để cho Quản trò biết được người đó là ai.', color:'#ef4444' },
+{ key:'pssoi', name:'☄️ Pháp sư sói', hint:'Mỗi đêm, Pháp sư sói thức dậy và sẽ đi tìm kiếm Tiên tri bằng cách chỉ thị một người, Quản trò sẽ cho biết đó có phải là Tiên tri hay không. Ma sói không được biết Pháp sư sói là ai  và Pháp sư sói cũng không biết Ma sói là ai. Tiên tri sẽ soi Pháp sư sói là người.', color:'#ef4444' },
+{ key:'scuong', name:'💢 Sói cuồng', hint:'Một lần trong trò chơi, kể từ đêm thứ hai, Sói cuồng có thể sử dụng chức năng cuồng nộ. Khi bầy sói ở trạng thái cuồng nộ người bị bầy sói giết không thể sống sót( các lượt bảo vệ không phải từ Hiệp sĩ thì không thể ngăn chặn).', color:'#ef4444' },
+{ key:'soidc', name:'☠️ Sói đại ca', hint:'Thức dậy cùng Ma sói. Chừng nào Sói đại ca còn tồn tại trong trò chơi thì mỗi đêm phe Ma sói có thể giết hai người chơi, miễn là hai người chơi đó ngồi cạnh nhau. Tuy nhiên phe Ma sói sẽ không biết ai là Sói đại ca. Đêm đầu tiên, Sói đại ca sẽ thức dậy một mình để cho Quản trò biết được người đó là ai.', color:'#ef4444' },
 { key:'soituyet', name:'❄️ Sói tuyết', hint:'Sói tuyết thức dậy cùng các Sói khác. Đêm đầu tiên thức dậy, Sói tuyết lựa chọn một người chơi khác làm bạn đồng hành. Nếu Sói tuyết chết người chơi đó cũng chết theo. Nếu người chơi đó chết thì Sói tuyết không chết.', color:'#ef4444' },
-{ key:'alpha', name:'🌕 Sói đầu đàn', hint:'Một lần trong trò chơi, sau cái chết của một Sói khác vào ban ngày, vào đêm tiếp theo, Sói đầu đàn có thể biến mục tiêu của Phe sói thành Ma sói thay vì bị loại. Nếu người chơi này được bảo vệ bởi một nguyên nhân nào đó thì vết cắn của Sói đầu đàn sẽ không có tác dụng. Khi đó Sói đầu đàn sẽ được cắn thêm một lần khác vào đêm sau.', color:'#ef4444' },
-{ key:'acmong', name:'🎃 Sói ác mộng', hint:'Một lần trong trò chơi, Sói ác mộng có thể gieo cơn ác mộng cho một người chơi và khiến chức năng của người đó bị vô hiệu trong đêm.', color:'#ef4444' },
-{ key:'hbi', name:'✨ TT Huyền Bí', hint:'Mỗi đêm, Tiên tri Huyền bí sẽ tỉnh dậy và chỉ định một người. Quản trò sẽ cho Tiên tri Huyền bí biết chính xác người chơi này là Chức năng gì.', color:'#3b82f6' },
+{ key:'alpha', name:'🌕 Sói đầu đàn', hint:'Một lần trong trò chơi, sau cái chết của một Ma sói khác vào ban ngày, vào đêm tiếp theo, Sói đầu đàn(Alpha) có thể biến mục tiêu của phe Ma Sói thành Ma sói thay vì bị giết. Nếu người chơi này được bảo vệ bởi một nguyên nhân nào đó thì vết cắn của Sói đầu đàn sẽ không có tác dụng. Khi đó Sói đầu đàn sẽ được cắn thêm một lần khác vào đêm sau.', color:'#ef4444' },
+{ key:'acmong', name:'🎃 Ác mộng', hint:'Một lần trong trò chơi, Sói ác mộng có thể gieo cơn ác mộng cho một người chơi và khiến chức năng của người đó bị vô hiệu trong đêm.', color:'#ef4444' },
+{ key:'hbi', name:'✨ Huyền Bí', hint:'Mỗi đêm, Tiên tri Huyền bí sẽ tỉnh dậy và chỉ định một người. Quản trò sẽ cho Tiên tri Huyền bí biết chính xác người chơi này là chức năng gì.', color:'#3b82f6' },
 { key:'dbom', name:'💣️ Đánh bom', hint:'Nếu Đánh bom  bị loại, thì hai người chơi bên trái và phải của người chơi này sẽ cùng bị loại (không tính những người chơi đã bị loại rồi).', color:'#3b82f6' },
-{ key:'tvan', name:'🔭 Thiên văn', hint:'Mỗi đêm, Thiên văn  sẽ tỉnh dậy và chỉ vào một người chơi. Nếu người chơi đó là Ma sói, người đó sẽ loại. Nếu không, Thiên văn sẽ bị loại.', color:'#3b82f6' },
-{ key:'lgac', name:'⚔️ Lính gác', hint:'Một lần trong trò chơi, Lính gác có thể chỉ định giết một người chơi (không thể dùng chức năng vào sáng ngày đầu tiên).', color:'#3b82f6' },
-{ key:'gsu',  name:'👨‍🏫 Giáo sư', hint:'Mỗi Đêm, Giáo sư tỉnh dậy và chỉ định hai người chơi. Quản trò sẽ cho biết hai người chơi này có cùng phe với nhau hay không.', color:'#3b82f6' }
-
+{ key:'tvan', name:'🔭 Thiên văn', hint:'Mỗi đêm, Thiên văn sẽ tỉnh dậy và có thể chỉ vào một người chơi để gọi mưa sao băng. Nếu người chơi đó là Ma sói, người đó sẽ loại. Nếu không, Thiên văn sẽ bị loại.', color:'#3b82f6' },
+{ key:'lgac', name:'⚔️ Lính gác', hint:'Một lần trong trò chơi, kể từ sáng thứ hai, Lính gác có thể chỉ định giết một người chơi nếu nghi ngờ.', color:'#3b82f6' },
+{ key:'gsu',  name:'👨‍🏫 Giáo sư', hint:'Mỗi Đêm, Giáo sư tỉnh dậy và chỉ định hai người chơi. Quản trò sẽ cho biết hai người chơi này có cùng phe với nhau hay không.', color:'#3b82f6' },
+{ key:'tsu', name:'🔮 Tập sự', hint:'Nếu Tiên tri chết, Tiên tri Tập sự sẽ trở thành Tiên tri mới. Tiên tri Tập sự được thông báo trong đêm, vào lượt gọi Tiên tri, Quản trò đụng vào vai của Tiên tri Tập sự để gọi dậy.', color:'#3b82f6' },
+{ key:'hquang', name:'🧿 Hào quang', hint:'Tiên tri Hào quang thức dậy mỗi đêm để kiểm tra người chơi có chức năng hay không, trường hợp không có chức năng là Dân thường và Sói thường.', color:'#3b82f6' },
+{ key:'nbenh', name:'🤒 Người bệnh', hint:'Nếu Người bệnh bị Ma sói cắn, thì Ma sói sẽ không thể cắn người nào vào đêm tiếp theo do bị bệnh.', color:'#3b82f6' },
+{ key:'cma', name:'👻 Con ma', hint:'Con ma bị chết ngay vào đêm đầu tiên. Mỗi đêm( bao gồm cả đêm đầu tiên), Con ma có thể liên hệ với những người chơi khác bằng cách viết 1 chữ lên 1 tờ giấy nhưng không được viết tên hay viết tắt tên, mà thay vào đó là đưa ra các gợi ý thú vị.', color:'#3b82f6' },
+{ key:'hbinh', name:'🤝 Hòa bình', hint:'Một lần trong trò chơi, Người yêu hòa bình ngăn chặn một lần biểu quyết treo cổ.', color:'#3b82f6' },
+{ key:'ttu', name:'🕵‍♂ Thám tử', hint:'Một lần trong trò chơi, vào ban đêm, Thám tử sẽ được gọi dậy và được phép chọn 1 một người. Quản trò sẽ cho Thám tử biết người đó hoặc hai người bên cạnh người đó có phải là Ma sói hay không.', color:'#3b82f6' },
+{ key:'hsi', name:'💂‍♂ Hiệp sĩ', hint:'Một lần trong trò chơi, vào ban đêm, Hiệp sĩ có thể chọn một người chơi để được bảo vệ. Người chơi này sẽ bất tử vào tất cả các đêm. Chỉ bị loại bởi các lí do vào ban ngày. ( như bị treo cổ).', color:'#3b82f6' },
+{ key:'blang', name:'🐆 Báo làng', hint:'Mỗi đêm, Quản trò sẽ hỏi “Báo làng có muốn quậy phá không?”. Nếu đồng ý, Báo làng sẽ tỉnh dậy và ra hiệu bằng cách gật đầu. Ngày hôm sau, sẽ có 2 lượt biểu quyết treo cổ. Báo làng chỉ thực hiện được 1 lần quậy phá trong suốt cả ván chơi.', color:'#3b82f6' },
+{ key:'gchu', name:'🦹 Giáo chủ', hint:'Mỗi đêm, Giáo chủ sẽ phải tỉnh dậy và thêm 1 người chơi vào giáo phái của mình. Nếu tất cả những người còn sống đều là người của giáo phái mình, Giáo chủ sẽ là người chiến thắng. Các điều kiện thắng khác cũng được áp dụng.', color:'#eab308' },
+{ key:'dgau', name:'🐻 Đầu gấu', hint:'Vào đêm thứ hai, Đầu gấu dụ dỗ hai người chơi. Nếu người bị dụ đồng ý bằng cách gật đầu thì thức dậy và trở thành đồng bọn của đầu gấu. Nếu chỉ còn một mình đầu gấu thì đầu gấu được giết một người vào mỗi đêm( không được giết người chơi khác vào đêm đầu tiên) hoặc tiếp tục dụ dỗ một người khác( lần cuối). Và chiến thắng cùng đồng bọn khi họ là những người chơi cuối cùng.', color:'#eab308' },
+{ key:'mcr', name:'🧛 Ma cà rồng', hint:'Là 1 thế lực mạnh thứ 3 ngoài phe Ma sói và phe Dân làng. Mỗi đêm, Ma cà rồng sẽ chọn 1 người chơi là nạn nhân. Nếu nạn nhân của Ma cà rồng bị từ 2 người chơi trở lên( không tính Ma cà rồng) nghi ngơ  trong cuộc thảo luận ở buổi sáng thì nạn nhân sẽ chết khi đến giờ biểu quyết. Ma cà rồng không thể bị giết bởi Ma sói vào ban đêm( trừ Sói trắng).', color:'#eab308' },
+{ key:'strang', name:'🐺 Sói trắng', hint:'Sói trắng thức dậy cùng bầy sói và tham gia cùng bầy sói để giết dân làng. Sau đó, Sói trắng sẽ thức dậy thêm một lần nữa để tiếp tục chọn mục tiêu để giết. Sói trắng dành chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
   ];
 
 // Chuẩn hoá dữ liệu customRoles: cho phép dạng {name:{count,faction}}
@@ -1514,7 +1788,7 @@ $.customRoleFaction && $.customRoleFaction.addEventListener('change', paintFacti
   }
 
   $.playerCount.addEventListener('change', ()=>{
-    STATE.playerCount = clamp(Number($.playerCount.value||10),3,40);
+    STATE.playerCount = clamp(Number($.playerCount.value||10),3,151);
     $.playerCount.value = STATE.playerCount;
     renderNames(); updateSlotsLeft();
   });
@@ -1567,7 +1841,7 @@ $.removeEmptyNames.addEventListener('click', () => {
 const defaultFactionMap = {
   // Ma sói
   werewolf: 'wolf', werecub: 'wolf', minion: 'wolf',
-  pssoi: 'wolf', soidc: 'wolf', soituyet: 'wolf', alpha: 'wolf', acmong: 'wolf',
+  pssoi: 'wolf', soidc: 'wolf', soituyet: 'wolf', alpha: 'wolf', acmong: 'wolf', scuong: 'wolf',
 
   // Dân làng
   seer: 'village', witch: 'village', hunter: 'village',
@@ -1575,12 +1849,15 @@ const defaultFactionMap = {
   prince: 'village', elder: 'village', 'tough guy': 'village',
   mayor: 'village', village: 'village', hbi: 'village',
   dbom: 'village', tvan: 'village', lgac: 'village', gsu: 'village',
+  tsu: 'village', hquang: 'village', nbenh: 'village', cma: 'village',
+  hbinh: 'village', ttu: 'village', hsi: 'village', blang: 'village',
+  
 
   // Đổi phe
   doppelganger: 'swap', cursed: 'swap', cupid: 'swap',
 
   // Phe thứ 3
-  tanner: 'third'
+  tanner: 'third', gchu: 'third', dgau: 'third', mcr: 'third', strang: 'third'
 };
 
   // Gom nhóm theo phe (gồm cả mặc định & tùy chỉnh)
@@ -1622,35 +1899,72 @@ const defaultFactionMap = {
     $.rolesList.appendChild(sep);
   };
 
-  const makeRowDefault = (role)=>{
-    const row = document.createElement('div'); row.className='item';
+  // --- THAY THẾ HÀM NÀY BÊN TRONG renderRoles() ---
+const makeRowDefault = (role)=>{
+  const row = document.createElement('div'); row.className='item';
 
-    const name = document.createElement('div');
-    name.innerHTML = `<span class="pill" style="border-color:${role.color||'#334'}">
-      <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="${role.color||'#888'}"/></svg> ${role.name}
-    </span>`;
+  const name = document.createElement('div');
+  name.innerHTML = `<span class="pill" style="border-color:${role.color||'#334'}">
+    <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="${role.color||'#888'}"/></svg> ${role.name}
+  </span>`;
 
-    const hint = document.createElement('div');
-    const viewBtn = document.createElement('button');
-    viewBtn.className='btn ghost';
-    viewBtn.textContent='Hiện';
-    viewBtn.addEventListener('click', ()=> modal.open(role.name, role.hint||'')); 
-    hint.appendChild(viewBtn);
+  const hint = document.createElement('div');
+  const viewBtn = document.createElement('button');
+  viewBtn.className='btn ghost';
+  viewBtn.textContent='Hiện';
+  viewBtn.addEventListener('click', ()=> modal.open(role.name, role.hint||'')); 
+  hint.appendChild(viewBtn);
 
-    const count = document.createElement('input');
-    count.type='number'; count.min='0';
-    count.value = STATE.roles[role.key] || 0;
-    count.addEventListener('change', ()=>{
-      STATE.roles[role.key] = clamp(Number(count.value||0),0,40);
-      count.value = STATE.roles[role.key];
-      updateSlotsLeft(); save();
-    });
+  const count = document.createElement('input');
+  count.type='number'; 
+  count.min='0';
+  // Riêng 2 vai này chỉ cho 0–1
+  const isTanner = role.key === 'tanner';
+  const isPeace  = role.key === 'hbinh';             // 🤝 Yêu hòa bình
+  if (isTanner || isPeace) count.max = '1';
 
-    const del = document.createElement('div'); // trống cho khớp lưới
+  // Giá trị hiện tại
+  count.value = STATE.roles[role.key] || 0;
 
-    $.rolesList.appendChild(row);
-    row.append(name, hint, count, del);
-  };
+  count.addEventListener('change', ()=>{
+    const prev = Number(STATE.roles[role.key] || 0);
+    // Clamp: tanner & hbinh chỉ 0–1, còn lại 0–40
+    const v = clamp(Number(count.value||0), 0, (isTanner||isPeace) ? 1 : 40);
+    STATE.roles[role.key] = v;
+    count.value = v;  // phản ánh lại nếu người dùng gõ > max
+
+    // ===== RÀNG BUỘC MỚI =====
+    // 1) Nếu tăng "Chán đời" từ 0 -> 1, tự thêm "Yêu hòa bình" = 1 (nếu đang 0)
+    if (isTanner && prev === 0 && v === 1) {
+      const peaceNow = Number(STATE.roles['hbinh'] || 0);
+      if (peaceNow === 0) {
+        STATE.roles['hbinh'] = 1;
+        alert('Chức năng "Hòa bình" được thêm vào danh sách vì đi chung với lá bài \'Chán đời\'');
+        renderRoles(); updateSlotsLeft(); save();
+        return; // vì đã re-render xong
+      }
+    }
+
+    // 2) Nếu giảm "Yêu hòa bình" xuống 0, tự giảm "Chán đời" = 0
+    if (isPeace && prev > 0 && v === 0) {
+      const tannerNow = Number(STATE.roles['tanner'] || 0);
+      if (tannerNow > 0) {
+        STATE.roles['tanner'] = 0;
+        alert('Chức năng "Chán đời" bị loại khỏi danh sách vì đi chung với lá bài \'Hòa bình\'');
+        renderRoles(); updateSlotsLeft(); save();
+        return; // vì đã re-render xong
+      }
+    }
+
+    // 3) Giảm "Chán đời" xuống 0: KHÔNG làm gì thêm (theo yêu cầu)
+    updateSlotsLeft(); save();
+  });
+
+  const del = document.createElement('div'); // trống cho khớp lưới
+
+  $.rolesList.appendChild(row);
+  row.append(name, hint, count, del);
+};
 
   const colorMap = { village:'#3b82f6', wolf:'#ef4444', swap:'#10b981', third:'#eab308' };
   const factionLabel = { village:'Dân làng', wolf:'Ma sói', swap:'Đổi phe', third:'Phe thứ 3' };
@@ -1669,7 +1983,7 @@ const defaultFactionMap = {
     const viewBtn = document.createElement('button');
     viewBtn.className='btn ghost'; viewBtn.textContent='Hiện';
     viewBtn.addEventListener('click', ()=> 
-      modal.open(`🧩 ${name}`, `Chức năng của vai trò tuỳ chỉnh · Phe: ${factionLabel[faction]}`)
+      modal.open(`🧩 ${name}`, `Chức năng của vai trò tuỳ chỉnh do Quản trò và Dân làng thống nhất đưa ra · Phe: ${factionLabel[faction]}`)
     );
     hint.appendChild(viewBtn);
 
@@ -1736,8 +2050,8 @@ const totalEl = document.getElementById('rolesTotal');
   const count = clamp(Number($.customRoleCount.value||1),1,40);
   const faction = $.customRoleFaction?.value || '';
 
-  if (!name)   return alert('Nhập tên vai trò tuỳ chỉnh');
-  if (!faction) return alert('Hãy chọn phe cho vai trò này');
+  if (!name)   return alert('Vui lòng nhập tên vai trò tuỳ chỉnh!');
+  if (!faction) return alert('Vui lòng lựa chọn phe cho vai trò này!');
 
   // đảm bảo cấu trúc {name:{count,faction}}
   normalizeCustomRoles();
@@ -1833,21 +2147,22 @@ const totalEl = document.getElementById('rolesTotal');
     return {order:3, cls:'f-third'};
   }
     // Phe Sói
-    if (t.includes('soi con') || t.includes('phan boi') || t.includes('ma soi')|| t.includes('phap su soi')|| t.includes('soi đai ca')|| t.includes('soi tuyet')|| t.includes('soi đau đan')|| t.includes('soi ac mong'))
+    if (t.includes('soi con') || t.includes('phan boi') || t.includes('ma soi')|| t.includes('phap su soi')|| t.includes('soi đai ca')|| t.includes('soi tuyet')|| t.includes('soi đau đan')|| t.includes('ac mong')|| t.includes('soi cuong'))
       return {order:0, cls:'f-wolf'};
     // Phe Dân
     if (t.includes('tien tri')||t.includes('phu thuy')||
         t.includes('tho san')||t.includes('bao ve')||t.includes('nguyet nu')||
         t.includes('dan lang')||t.includes('hoang tu')||t.includes('gia lang')||
-        t.includes('luc si')||t.includes('thi truong')||t.includes('tt huyen bi')||
+        t.includes('luc si')||t.includes('thi truong')||t.includes('huyen bi')||
         t.includes('đanh bom')||t.includes('thien van')||t.includes('linh gac')||
-        t.includes('giao su'))
+        t.includes('giao su')||t.includes('tap su')||t.includes('hao quang')||t.includes('nguoi benh')||t.includes('bao lang')||
+        t.includes('con ma')||t.includes('hoa binh')||t.includes('hiep si')||t.includes('tham tu'))
       return {order:1, cls:'f-vil'};
     // Phe đổi phe
     if (t.includes('cupid')||t.includes('nhan ban')||t.includes('bi nguyen'))
       return {order:2, cls:'f-swap'};
     // Phe thứ ba / khác
-    if (t.includes('chan doi'))
+    if (t.includes('chan doi')||t.includes('giao chu')||t.includes('đau gau')||t.includes('ma ca rong')||t.includes('soi trang'))
       return {order:3, cls:'f-third'};
     return {order:3, cls:'f-third'};
   }
@@ -1993,6 +2308,83 @@ qsa('[data-kill]', $.assignments).forEach(btn => {
 
   function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s])); }
 
+// ===== KHO LƯU GHI CHÉP =====
+const notesArchiveModal = {
+  wrap: document.getElementById('notesArchiveModal'),
+  title: document.getElementById('notesArchiveTitle'),
+  body:  document.getElementById('notesArchiveBody'),
+  btnClose: document.getElementById('notesArchiveClose'),
+  open(){
+    this.render();
+    this.wrap.classList.add('show');
+    this.wrap.setAttribute('aria-hidden','false');
+    this.btnClose?.focus();
+  },
+  close(){
+    this.wrap.classList.remove('show');
+    this.wrap.setAttribute('aria-hidden','true');
+  },
+  render(){
+    const list = STATE.notesArchive || [];
+    const total = list.length;
+
+    const itemsHTML = !total
+      ? `<div class="hint">Chưa có bản lưu nào. Hãy bấm <b>💿️ Lưu</b> sau khi ghi chú.</div>`
+      : `<div class="hint">Đã lưu <b>${total}</b> lần.</div>
+         <div class="archive-list">
+           ${list.slice().reverse().map(it=>{
+              const when = new Date(it.timeISO).toLocaleString('vi-VN', { hour12:false });
+              return `
+                <div class="archive-item">
+                  <div class="archive-meta">Lần #${it.id} • ${when}</div>
+                  <div class="archive-content">${escapeHtml(it.content)}</div>
+                </div>`;
+            }).join('')}
+         </div>`;
+
+    this.body.innerHTML = itemsHTML +
+      `<div class="archive-actions">
+         <button class="btn danger" id="notesArchiveClearAll">Xóa toàn bộ lưu trữ</button>
+         <button class="btn" id="notesArchiveClose2">Đóng</button>
+       </div>`;
+
+    // gắn sự kiện cho 2 nút trong body (vì body vừa được innerHTML)
+    const clearBtn = this.body.querySelector('#notesArchiveClearAll');
+    const close2   = this.body.querySelector('#notesArchiveClose2');
+
+    clearBtn?.addEventListener('click', ()=>{
+      if(!confirm('Bạn chắc chắn muốn xóa toàn bộ các bản lưu? Hành động này không thể hoàn tác.')) return;
+      STATE.notesArchive = [];
+      STATE.notesSaveSeq = 0;   // reset số lần
+      save();
+      this.render();
+      alert('Đã xóa toàn bộ lưu trữ và đặt lại bộ đếm.');
+    });
+    close2?.addEventListener('click', ()=> this.close());
+  }
+};
+
+// Đóng modal khi click ra ngoài / nhấn ESC
+notesArchiveModal.btnClose?.addEventListener('click', ()=> notesArchiveModal.close());
+notesArchiveModal.wrap?.addEventListener('click', (e)=>{ if(e.target===notesArchiveModal.wrap) notesArchiveModal.close(); });
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') notesArchiveModal.close(); });
+
+// Lưu một “bản chụp” ghi chú
+function saveNotesSnapshot(){
+  const text = (qs('#notes')?.value || '');
+  if(!text.trim()){
+    if(!confirm('Ghi chú đang trống. Bạn có muốn lưu một đoạn văn bản trống?')) return;
+  }
+  STATE.notesSaveSeq = (STATE.notesSaveSeq || 0) + 1;
+  const entry = { id: STATE.notesSaveSeq, timeISO: new Date().toISOString(), content: text };
+  STATE.notesArchive = STATE.notesArchive || [];
+  STATE.notesArchive.push(entry);
+  save();
+
+  const when = new Date(entry.timeISO).toLocaleString('vi-VN', { hour12:false });
+  alert(`Đã lưu ghi chép #${entry.id} (${when}).\nXem lại ở "📁 Kho lưu trữ".`);
+}
+
   // ====== TIMER ======
   let TICK = null; let remaining = 120; let countingUp=false;
 
@@ -2124,9 +2516,15 @@ window.addEventListener('resize', autoGrowNotes);
     }catch{}
   });
 
+$.saveNotesBtn?.addEventListener('click', saveNotesSnapshot);
+$.openArchiveBtn?.addEventListener('click', () => notesArchiveModal.open());
+
   // ====== INIT ======
   function init(){
     load();
+    if (!Array.isArray(STATE.notesArchive)) STATE.notesArchive = [];
+    if (!Number.isInteger(STATE.notesSaveSeq)) STATE.notesSaveSeq = 0;
+    save();
     $.playerCount.value = STATE.playerCount;
     renderNames();
 
