@@ -918,8 +918,8 @@ header {
   text-align: center;
 }
 
-/* Ẩn ô Mẹo */
-.section-title .chip {
+/* Ẩn ô Mẹo ở các section bình thường, KHÔNG ẩn ở header vai trò */
+.section-title:not(.roles-head) .chip {
   display: none !important;
 }
 
@@ -988,6 +988,53 @@ header {
 #timerSec {
   margin-left: 0 !important;
 }
+/* Màu viền theo phe khi đã chọn */
+#customRoleFaction.f-village { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+#customRoleFaction.f-wolf    { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.15); }
+#customRoleFaction.f-swap    { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.15); }
+#customRoleFaction.f-third   { border-color:#eab308; box-shadow:0 0 0 3px rgba(234,179,8,.15); }
+
+/* ===== ỦNG HỘ / DONATION ===== */
+.donate{
+  margin-top:16px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#0b0f1e;
+}
+.donate h2{
+  margin:0 0 8px;
+  font-size:20px;
+}
+.donate .wrap{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.donate .qr{
+  width:180px;              /* bạn có thể đổi 160–220px tuỳ ý */
+  aspect-ratio:1/1;         /* luôn vuông 1:1 */
+  object-fit:cover;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#0a0f22;
+}
+.donate .info{
+  flex:1;
+  font-size:14px;
+  line-height:1.7;
+}
+.donate .label{
+  color:var(--muted);
+  font-weight:600;
+  display:inline-block;
+  min-width:110px;          /* cột nhãn thẳng hàng */
+}
+@media (max-width:420px){
+  .donate .qr{ width:150px; }
+  .donate .label{ min-width:100px; }
+}
 
   </style>
 </head>
@@ -1042,6 +1089,9 @@ header {
       <div class="section-title roles-head">
         <h2>🃏 Thiết lập vai trò</h2>
         <div class="chip">Còn trống: <b id="slotsLeft">0</b></div>
+<div class="chip" style="grid-column:4;justify-self:start">
+    Tổng: <b id="rolesTotal">0</b>
+  </div>
       </div>
 
       <div class="roles" role="table" aria-label="Bảng vai trò">
@@ -1056,6 +1106,13 @@ header {
         <div class="grow row">
           <input id="customRoleName" type="text" placeholder="Thêm vai trò mới (ví dụ: Bị nguyền rủa)" />
           <input id="customRoleCount" type="number" min="1" value="1" />
+<select id="customRoleFaction" title="Chọn phe cho vai trò">
+    <option value="" selected disabled>— Chọn phe —</option>
+    <option value="village">Dân làng</option>
+    <option value="wolf">Ma sói</option>
+    <option value="swap">Đổi phe</option>
+    <option value="third">Phe thứ 3</option>
+  </select>
         </div>
         <div id="customRoleActions" class="row">
           <button class="btn" id="addCustomRole">+ Thêm vai trò</button>
@@ -1123,11 +1180,26 @@ header {
         <button class="btn" id="quickTemplateBtn">✍️ Soạn mẫu nhanh</button>
       </div>
       <textarea id="notes" placeholder="Ghi chú: ai bị treo cổ, ai bị sói cắn, lá phiếu, v.v."></textarea>
+
+<!-- ỦNG HỘ TÔI -->
+<div class="donate no-print">
+  <h2>❤ Ủng hộ tôi vài gói mì nếu bạn muốn ❤</h2>
+  <div class="wrap">
+    <!-- Thay src bằng ảnh QR bạn cung cấp -->
+    <img class="qr" src="./qr.png" alt="QR MB Bank 0332807382">
+    <div class="info">
+      <div><span class="label">NGÂN HÀNG TMCP QUÂN ĐỘI</span>MB BANK</div>
+      <div><span class="label">SỐ TK:</span> 0332807382</div>
+      <div><span class="label">TÊN TK:</span> NGUYEN DINH DANG KHOA</div>
+    </div>
+  </div>
+</div>
+
     </aside>
   </div>
 
   <div class="footer no-print">Created by Dang Khoa ❤️ – Lưu tự động, hoạt động offline.</div>
-
+  <div class="footer no-print">Phiên bản cập nhật mới nhất: 16/09/2025</div>
   <!-- Modal xem mô tả vai -->
   <div id="roleModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal" role="document">
@@ -1155,6 +1227,7 @@ header {
     customRoleName: qs('#customRoleName'),
     customRoleCount: qs('#customRoleCount'),
     resetRoles: qs('#resetRoles'),
+    customRoleFaction: qs('#customRoleFaction'),
 
     assignBtn: qs('#assignBtn'),
     reshuffleBtn: qs('#reshuffleBtn'),
@@ -1212,7 +1285,7 @@ header {
 
   // Default roles
   const DEFAULT_ROLES = [
-    { key:'cupid', name:'💘 Cupid', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi ( được phép chọn cả mình). Hai người được chọn sẽ trở thành 2 người yêu nhau. Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo.', color:'#e91e63' },
+    { key:'cupid', name:'💘 Cupid', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi ( được phép chọn cả mình). Hai người được chọn sẽ trở thành 2 người yêu nhau. Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo. Nếu ghép trúng 2 phe trái nhau thì 2 người chơi sẽ trở thành phe thứ 3 và dành chiến thắng khi họ là người cuối cùng còn sống sót.', color:'#e91e63' },
     { key:'werewolf', name:'🐺 Sói', hint:'Vào ban đêm, Ma sói sẽ tỉnh dậy cùng nhau và thống nhất giết 1 nạn nhận nào đó. Sói có thể không giết người nào và không được giết sói khác.', color:'#d32f2f' },
     { key:'werecub', name:'🐺 Sói con', hint:'Sói con là Sói và thức dậy cùng Sói mỗi đêm. Nếu Sói con bị giết, Sói còn lại sẽ giết 2 người vào đêm hôm sau. Sói có thể chọn giết Sói Con như 1 sự hy sinh ( Tất cả Sói bao gồm cả Sói con đều đồng ý việc đó). Khi đó Sói có thể lập tức giết 2 người chơi khác vào ngay đêm hôm đó.', color:'#ff7043' },
     { key:'minion', name:'🎭️ Phản bội', hint:'Phản bội thức dậy cùng Sói và biết Sói là ai. Tham gia cùng Sói để giết Dân làng. Tuy nhiên Tiên tri khi soi vào Phản bội thì vẫn ra dân làng.', color:'#6d4c41' },
@@ -1230,6 +1303,31 @@ header {
     { key:'tough guy', name:'💪 Lực sĩ', hint:'Nếu bị Sói cắn, Lực sĩ sẽ chết vào đêm tiếp theo chứ không phải ngay tại đêm đó.', color:'#c2185b' },
     { key:'mayor', name:'⭐ Thị trưởng', hint:'Phiếu biểu quyết của Thị trưởng được tính là 2 phiếu khi biểu quyết treo cổ.', color:'#03a9f4' },
   ];
+
+// Chuẩn hoá dữ liệu customRoles: cho phép dạng {name:{count,faction}}
+function normalizeCustomRoles(){
+  const cr = STATE.customRoles || {};
+  const fixed = {};
+  Object.entries(cr).forEach(([name, val])=>{
+    if (typeof val === 'number') {
+      fixed[name] = { count: val, faction: 'third' }; // mặc định phe 3 cho dữ liệu cũ
+    } else {
+      const c = Number(val.count||0);
+      fixed[name] = { count: c, faction: val.faction || 'third' };
+    }
+  });
+  STATE.customRoles = fixed;
+}
+
+function paintFactionSelect(){
+  const sel = $.customRoleFaction;
+  if (!sel) return;
+  sel.classList.remove('f-village','f-wolf','f-swap','f-third');
+  const map = { village:'f-village', wolf:'f-wolf', swap:'f-swap', third:'f-third' };
+  const cls = map[sel.value];
+  if (cls) sel.classList.add(cls);
+}
+$.customRoleFaction && $.customRoleFaction.addEventListener('change', paintFactionSelect);
 
   const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
   const load = () => { try{ const s = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s) STATE = {...STATE, ...s}; }catch{} };
@@ -1300,66 +1398,102 @@ $.removeEmptyNames.addEventListener('click', () => {
   function ensureDefaultRoles(){ if(!STATE.roles || Object.keys(STATE.roles).length===0){ STATE.roles = {werewolf:3, seer:1, witch:1, hunter:1, guard:1, cupid:1, spellcaster:1, prince:1}; } }
 
   function renderRoles(){
-    $.rolesList.innerHTML=''; ensureDefaultRoles();
+  $.rolesList.innerHTML=''; 
+  ensureDefaultRoles();
 
-    const makeRow = (role)=>{
-      const row = document.createElement('div'); row.className='item';
+  // === Hàng cho vai trò mặc định ===
+  const makeRow = (role)=>{
+    const row = document.createElement('div'); 
+    row.className='item';
 
-      const name = document.createElement('div');
-      name.innerHTML = `<span class="pill" style="border-color:${role.color||'#334'}">
-        <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="${role.color||'#888'}"/></svg> ${role.name}
-      </span>`;
+    const name = document.createElement('div');
+    name.innerHTML = `<span class="pill" style="border-color:${role.color||'#334'}">
+      <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="${role.color||'#888'}"/></svg> ${role.name}
+    </span>`;
 
-      const hint = document.createElement('div');
-      const viewBtn = document.createElement('button');
-      viewBtn.className='btn ghost'; viewBtn.textContent='Hiện';
-      viewBtn.addEventListener('click', ()=> modal.open(role.name, role.hint||'')); hint.appendChild(viewBtn);
+    const hint = document.createElement('div');
+    const viewBtn = document.createElement('button');
+    viewBtn.className='btn ghost'; 
+    viewBtn.textContent='Hiện';
+    viewBtn.addEventListener('click', ()=> modal.open(role.name, role.hint||'')); 
+    hint.appendChild(viewBtn);
 
-      const count = document.createElement('input');
-      count.type='number'; count.min='0'; count.value = STATE.roles[role.key]||0;
-      count.addEventListener('change', ()=>{
-        STATE.roles[role.key] = clamp(Number(count.value||0),0,40);
-        count.value = STATE.roles[role.key]; updateSlotsLeft(); save();
-      });
-
-      const del = document.createElement('div');
-
-      $.rolesList.appendChild(row);
-      row.append(name, hint, count, del);
-    };
-
-    DEFAULT_ROLES.forEach(makeRow);
-
-    // Custom roles
-    Object.entries(STATE.customRoles||{}).forEach(([name,countVal])=>{
-      const row = document.createElement('div'); row.className='item';
-
-      const nameDiv = document.createElement('div');
-      nameDiv.innerHTML = `<span class="pill">🧩 ${name}</span>`;
-
-      const hint = document.createElement('div');
-      const viewBtn2 = document.createElement('button');
-      viewBtn2.className='btn ghost'; viewBtn2.textContent='Hiện';
-      viewBtn2.addEventListener('click', ()=> modal.open(`🧩 ${name}`, 'Vai trò tùy chỉnh: Chức năng của vai trò tủy chỉnh này sẽ do quản trò & làng thống nhất đưa ra.')); hint.appendChild(viewBtn2);
-
-      const count = document.createElement('input'); count.type='number'; count.min='0'; count.value = countVal;
-      count.addEventListener('change', ()=>{
-        STATE.customRoles[name] = clamp(Number(count.value||0),0,40);
-        if(STATE.customRoles[name]===0) delete STATE.customRoles[name];
-        updateSlotsLeft(); save();
-      });
-
-      const del = document.createElement('div');
-      const delBtn = document.createElement('button'); delBtn.className='btn danger'; delBtn.textContent='Xoá';
-      delBtn.onclick = ()=>{ delete STATE.customRoles[name]; renderRoles(); updateSlotsLeft(); save(); };
-      del.appendChild(delBtn);
-
-      $.rolesList.appendChild(row);
-      row.append(nameDiv, hint, count, del);
+    const count = document.createElement('input');
+    count.type='number'; 
+    count.min='0'; 
+    count.value = STATE.roles[role.key]||0;
+    count.addEventListener('change', ()=>{
+      STATE.roles[role.key] = clamp(Number(count.value||0),0,40);
+      count.value = STATE.roles[role.key]; 
+      updateSlotsLeft(); 
+      save();
     });
 
-    updateSlotsLeft();
-  }
+    const del = document.createElement('div'); // cột trống để căn lưới
+
+    $.rolesList.appendChild(row);
+    row.append(name, hint, count, del);
+  };
+
+  DEFAULT_ROLES.forEach(makeRow);
+
+  // === Hàng cho vai trò tuỳ chỉnh ===
+  Object.entries(STATE.customRoles||{}).forEach(([name,obj])=>{
+    const {count:countVal=0, faction='third'} = (obj||{});
+
+    const row = document.createElement('div'); 
+    row.className='item';
+
+    const colorMap = { village:'#3b82f6', wolf:'#ef4444', swap:'#10b981', third:'#eab308' };
+    const factionLabel = { village:'Dân làng', wolf:'Ma sói', swap:'Đổi phe', third:'Phe thứ 3' };
+
+    const nameDiv = document.createElement('div');
+nameDiv.innerHTML = `<span class="pill" style="border-color:${colorMap[faction]}">
+  <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="${colorMap[faction]}"/></svg>
+  🧩 ${escapeHtml(name)}
+</span>`;
+
+    const hint = document.createElement('div');
+    const viewBtn2 = document.createElement('button');
+    viewBtn2.className='btn ghost'; 
+    viewBtn2.textContent='Hiện';
+    viewBtn2.addEventListener('click', ()=> 
+      modal.open(`🧩 ${name}`, `Chức năng của vai trò tùy chỉnh sẽ do Quản trò và Dân làng thống nhất đưa ra · Phe: ${factionLabel[faction]}`)
+    );
+    hint.appendChild(viewBtn2);
+
+    const count = document.createElement('input');
+    count.type='number'; 
+    count.min='0'; 
+    count.value = countVal;
+    count.addEventListener('change', ()=>{
+      normalizeCustomRoles();
+      const v = clamp(Number(count.value||0),0,40);
+      STATE.customRoles[name] = { count: v, faction };
+      if (v===0) delete STATE.customRoles[name];
+      renderRoles();           // vẽ lại hàng nếu bị xoá
+      updateSlotsLeft(); 
+      save();
+    });
+
+    const del = document.createElement('div');
+    const delBtn = document.createElement('button'); 
+    delBtn.className='btn danger'; 
+    delBtn.textContent='Xoá';
+    delBtn.onclick = ()=>{
+      delete STATE.customRoles[name];
+      renderRoles();
+      updateSlotsLeft();
+      save();
+    };
+    del.appendChild(delBtn);
+
+    $.rolesList.appendChild(row);
+    row.append(nameDiv, hint, count, del);
+  });
+
+  updateSlotsLeft();
+}
 
   function updateSlotsLeft(){
     const totalPlayers = Number($.playerCount.value||STATE.playerCount);
@@ -1367,21 +1501,38 @@ $.removeEmptyNames.addEventListener('click', () => {
     const left = totalPlayers - totalSelected;
     $.slotsLeft.textContent = left;
     $.slotsLeft.style.color = left < 0 ? 'salmon' : '#c7ffee';
+const totalEl = document.getElementById('rolesTotal');
+  if (totalEl) totalEl.textContent = totalSelected;
   }
 
   function totalRolesSelected(){
-    const base = Object.values(STATE.roles||{}).reduce((a,b)=>a+Number(b||0),0);
-    const custom = Object.values(STATE.customRoles||{}).reduce((a,b)=>a+Number(b||0),0);
-    return base + custom;
-  }
+  const base = Object.values(STATE.roles||{}).reduce((a,b)=>a+Number(b||0),0);
+  const custom = Object.values(STATE.customRoles||{}).reduce((a,v)=>a+Number((v&&v.count)||0),0);
+  return base + custom;
+}
+
 
   $.addCustomRole.addEventListener('click', ()=>{
-    const name = ($.customRoleName.value||'').trim(); const count = clamp(Number($.customRoleCount.value||1),1,40);
-    if(!name) return alert('Nhập tên vai trò tuỳ chỉnh');
-    STATE.customRoles[name] = (STATE.customRoles[name]||0) + count;
-    $.customRoleName.value=''; $.customRoleCount.value='1';
-    renderRoles(); save();
-  });
+  const name = ($.customRoleName.value||'').trim();
+  const count = clamp(Number($.customRoleCount.value||1),1,40);
+  const faction = $.customRoleFaction?.value || '';
+
+  if (!name)   return alert('Nhập tên vai trò tuỳ chỉnh');
+  if (!faction) return alert('Hãy chọn phe cho vai trò này');
+
+  // đảm bảo cấu trúc {name:{count,faction}}
+  normalizeCustomRoles();
+  const cur = STATE.customRoles[name] || {count:0, faction};
+  const newCount = (cur.count||0) + count;
+
+  STATE.customRoles[name] = { count: newCount, faction };  // lưu phe
+  $.customRoleName.value = '';
+  $.customRoleCount.value = '1';
+  if ($.customRoleFaction){ $.customRoleFaction.value = ''; paintFactionSelect(); }
+
+  renderRoles(); updateSlotsLeft(); save();
+});
+
   $.resetRoles.addEventListener('click', ()=>{ STATE.roles = {werewolf:3, seer:1, witch:1, hunter:1, guard:1, cupid:1, spellcaster:1, prince:1}; STATE.customRoles = {}; renderRoles(); save(); });
 
   // ====== ASSIGNMENT ======
@@ -1394,7 +1545,11 @@ $.removeEmptyNames.addEventListener('click', () => {
     const roleNameFromKey = k => (DEFAULT_ROLES.find(r=>r.key===k)?.name) || k;
 
     Object.entries(STATE.roles||{}).forEach(([k,c])=> addMany(roleNameFromKey(k), Number(c||0)));
-    Object.entries(STATE.customRoles||{}).forEach(([name,c])=> addMany(name, Number(c||0)));
+    Object.entries(STATE.customRoles||{}).forEach(([name,obj])=>{
+  const c = Number((obj && obj.count) || 0);
+  addMany(name, c);
+});
+
 
     if(parts.length > n){ return alert(`Tổng số vai trò(${parts.length}) vượt quá số người (${n}). Hãy giảm bớt vai trò hoặc tăng số lượng người chơi.`); }
 
@@ -1430,7 +1585,10 @@ $.removeEmptyNames.addEventListener('click', () => {
 
   $.copyBtn.addEventListener('click', async ()=>{
     if(!STATE.assignments) return;
-    const lines = STATE.assignments.map((x,i)=> `${i+1}. ${x.name} — ${x.role}`).join('\n');
+    const lines = STATE.assignments
+  .map((x,i)=> `${i+1}. ${x.name} — ${displayRole(x.role)}`)
+  .join('\n');
+
     try{ await navigator.clipboard.writeText(lines); alert('Đã sao chép danh sách vai trò vào clipboard!'); }
     catch{ alert('Không thể sao chép, hãy chọn thủ công.'); }
   });
@@ -1445,17 +1603,26 @@ $.removeEmptyNames.addEventListener('click', () => {
   }
   function factionOf(role){
     const t = _ascii(role);
+// ƯU TIÊN: custom role có lưu phe
+  const cr = STATE.customRoles && STATE.customRoles[role];
+  if (cr && cr.faction) {
+    const f = cr.faction;
+    if (f==='wolf')    return {order:0, cls:'f-wolf'};
+    if (f==='village') return {order:1, cls:'f-vil'};
+    if (f==='swap')    return {order:2, cls:'f-swap'};
+    return {order:3, cls:'f-third'};
+  }
     // Phe Sói
-    if (t.includes('soi con') || t.includes('ke phan boi') || t.includes('soi'))
+    if (t.includes('soi con') || t.includes('phan boi') || t.includes('soi'))
       return {order:0, cls:'f-wolf'};
     // Phe Dân
-    if (t.includes('than tinh yeu')||t.includes('tien tri')||t.includes('phu thuy')||
-        t.includes('tho san')||t.includes('bao ve')||t.includes('phap su cam')||
+    if (t.includes('cupid')||t.includes('tien tri')||t.includes('phu thuy')||
+        t.includes('tho san')||t.includes('bao ve')||t.includes('nguyet nu')||
         t.includes('dan lang')||t.includes('hoang tu')||t.includes('gia lang')||
         t.includes('luc si')||t.includes('thi truong'))
       return {order:1, cls:'f-vil'};
     // Phe đổi phe
-    if (t.includes('nhan ban')||t.includes('ke bi nguyen'))
+    if (t.includes('nhan ban')||t.includes('bi nguyen'))
       return {order:2, cls:'f-swap'};
     // Phe thứ ba / khác
     if (t.includes('chan doi'))
@@ -1508,6 +1675,14 @@ function toggleDeadByName(name){
   renderAssignments(); save();
 }
 
+function displayRole(role) {
+  // Nếu là vai trò tùy chỉnh (tên tồn tại trong STATE.customRoles) thì thêm 🧩
+  if (STATE.customRoles && Object.prototype.hasOwnProperty.call(STATE.customRoles, role)) {
+    return `🧩 ${role}`;
+  }
+  return role; // vai trò mặc định đã có emoji sẵn (🐺, 🔮, …)
+}
+
   function renderAssignments(){
   if(!STATE.assignments){ $.assignments.innerHTML=''; return; }
 
@@ -1516,7 +1691,8 @@ function toggleDeadByName(name){
     const fac = factionOf(x.role);
     const isDead = !!(STATE.dead && STATE.dead[x.name]);
     const safeNameAttr = String(x.name).replace(/"/g,'&quot;'); // attr-safe
-    const roleCell = revealed ? escapeHtml(x.role) : '&nbsp;';   // trống khi Ẩn
+    const viewRole = displayRole(x.role);
+const roleCell = revealed ? escapeHtml(viewRole) : '&nbsp;';
 
     return `<tr class="${revealed? 'revealed':''} ${fac.cls} ${isDead?'dead':''}"
                data-name="${safeNameAttr}">
@@ -1723,6 +1899,7 @@ window.addEventListener('resize', autoGrowNotes);
     renderNames();
 
     ensureDefaultRoles();
+    normalizeCustomRoles();
     renderRoles();
 
     if(STATE.assignments){ renderAssignments(); $.reshuffleBtn.disabled=false; $.revealAllBtn.disabled=false; $.copyBtn.disabled=false; $.sortBtn.disabled=false; }
