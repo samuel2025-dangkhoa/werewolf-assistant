@@ -1386,7 +1386,112 @@ header {
 @media (max-width: 480px){
   .promo-title{ font-size: clamp(22px, 5.4vw, 28px); } /* mobile to hơn */
 }
+/* === FAB '!!' mở bảng Thứ tự kêu dậy === */
+.fab-night{
+  position: fixed;
+  right: 16px; 
+  bottom: 16px;
+  width: 56px; height: 56px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--accent) 0%, #5f44ff 100%);
+  color: #fff; font-weight: 900; font-size: 20px;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 1000;
+}
+.fab-night:hover{ transform: translateY(-1px); }
 
+/* Thân modal nội dung 'Thứ tự kêu dậy' */
+#nightOrderBody{
+  background: rgba(8,12,28,.72);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 0 0 12px 12px;
+  padding: 14px 16px;
+  color: var(--text);
+  line-height: 1.7;
+  white-space: normal;                 /* dùng danh sách, không cần pre-wrap */
+}
+#nightOrderBody .intro{ color:#c7cfff; margin: 0 0 8px }
+#nightOrderBody ol{ margin: 6px 0 10px; padding-left: 1.4em }
+#nightOrderBody li + li{ margin-top: 4px }
+#nightOrderBody .note{ opacity:.9; font-size:.95em }
+#nightOrderBody .sub{ color:#a5b4fc; font-size:.95em; margin:.25em 0 .5em }
+#nightOrderBody .section{
+  text-align:center; margin:10px 0 6px; color:var(--muted); font-weight:700
+}
+
+/* Ẩn khi in */
+@media print{ .fab-night{ display:none !important } }
+/* Cho thân modal cuộn khi nội dung dài */
+.modal{
+  width: min(720px, 95vw);
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+.modal header{
+  flex: 0 0 auto;
+}
+.modal .content{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto !important;            /* <- cho phép cuộn */
+  -webkit-overflow-scrolling: touch;    /* mượt trên mobile */
+}
+/* Modal 'Thứ tự kêu dậy' — căn giữa 2 dòng mở đầu */
+#nightOrderBody .intro{
+  color:#c7cfff;
+  margin:0 0 8px;
+  text-align:center;            /* căn giữa */
+  text-wrap:balance;
+}
+
+/* Mục số 4 của danh sách đầu tiên: căn đều (Ctrl+J) */
+#nightOrderBody ol:first-of-type > li:nth-child(4){
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
+/* Dòng phụ bên trong mục 4 vẫn căn trái bình thường */
+#nightOrderBody ol:first-of-type > li:nth-child(4) .sub{
+  text-align: left;
+}
+/* Mục 4: 2 dòng .sub căn giữa + đỏ + đậm */
+#nightOrderBody ol:first-of-type > li:nth-child(4) .sub{
+  text-align: center !important;
+  color: var(--danger, #ef4444) !important; /* đỏ đồng bộ theme */
+  font-weight: 700 !important;
+}
+/* Đỏ + đậm cho dòng "Kêu dậy 1 lần đêm đầu tiên ..." trong modal */
+#nightOrderBody .section{
+  color: var(--danger, #ef4444) !important;
+  font-weight: 800 !important;
+}
+/* Thu nhỏ header 2 modal: Kho lưu trữ & Thứ tự kêu dậy */
+#notesArchiveModal header,
+#nightOrderModal header{
+  padding: 12px 16px;     /* cùng padding như modal mô tả vai */
+}
+
+/* H3 không còn margin mặc định -> header thấp lại đúng bằng nhau */
+#notesArchiveModal header h3,
+#nightOrderModal header h3{
+  margin: 0;              /* quan trọng: bỏ top/bottom margin mặc định */
+  font-size: 18px;        /* đồng bộ kích thước */
+  line-height: 1.2;
+}
+
+/* Nút đóng gọn lại một chút cho cân đối (tuỳ chọn) */
+#notesArchiveModal .close,
+#nightOrderModal .close{
+  padding: 6px 10px;
+  font-size: 14px;
+  line-height: 1.2;
+}
   </style>
 </head>
 <body>
@@ -1582,7 +1687,7 @@ header {
   </div>
 
   <div class="footer no-print">Created by Dang Khoa ❤️ – Lưu tự động, hoạt động offline.</div>
-  <div class="footer no-print">Phiên bản cập nhật mới nhất: 20:40 16/09/2025</div>
+  <div class="footer no-print">Phiên bản cập nhật mới nhất: 00:50 17/09/2025</div>
   <!-- Modal xem mô tả vai -->
   <div id="roleModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal" role="document">
@@ -1606,7 +1711,19 @@ header {
     </div>
   </div>
 </div>
+<!-- NÚT '!!' nổi -->
+<button class="fab-night no-print" id="nightOrderBtn" aria-label="Thứ tự kêu dậy">!!</button>
 
+<!-- Modal: Thứ tự kêu dậy -->
+<div id="nightOrderModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal" role="document">
+    <header>
+      <h3 id="nightOrderTitle">🌙 Thứ tự kêu dậy mỗi đêm</h3>
+      <button class="close" id="nightOrderClose">Đóng</button>
+    </header>
+    <div class="content" id="nightOrderBody"></div>
+  </div>
+</div>
 <script>
 (function(){
   const qs = (s, el=document)=>el.querySelector(s);
@@ -1698,10 +1815,10 @@ function scheduleAutoSort(){
     { key:'cupid', name:'💘 Cupid', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi để ghép đôi( được phép chọn cả mình). Hai người được chọn sẽ thức dậy, nhận diện và trao đổi vai trò cho nhau nhưng không biết ai là người ghép đôi( trừ khi chính Cupid chọn bản thân là người được ghép đôi). Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo. Nếu ghép trúng 2 phe trái nhau thì 2 người chơi sẽ trở thành phe thứ 3 hoàn toàn mới và dành chiến thắng khi họ là người cuối cùng còn sống sót.', color:'#10b981' },
     { key:'werewolf', name:'🐺 Ma sói', hint:'Vào mỗi đêm, Ma sói sẽ tỉnh dậy cùng nhau và thống nhất giết 1 người chơi. Bầy sói có thể không giết người nào và không được giết sói khác. Ma sói chiến thắng khi số Dân làng < hoặc = số Ma sói và không còn Sói trắng.', color:'#ef4444' },
     { key:'werecub', name:'🐺 Sói con', hint:'Sói con thức dậy cùng bầy sói mỗi đêm. Nếu Sói con bị giết, Ma sói còn lại sẽ giết 2 người vào đêm hôm sau. Bầy sói có thể chọn giết Sói con như 1 sự hy sinh( Tất cả bầy sói bao gồm cả Sói con đều đồng ý việc đó). Khi đó bầy sói có thể lập tức giết 2 người chơi khác vào ngay đêm hôm đó.', color:'#ef4444' },
-    { key:'minion', name:'🎭️ Phản bội', hint:'Phản bội thức dậy cùng bầy sói. Tham gia cùng bầy sói để giết Dân làng. Tuy nhiên tiên tri khi soi vào phản bội thì vẫn ra Dân làng.', color:'#ef4444' },
+    { key:'minion', name:'🎭️ Phản bội', hint:'Phản bội thức dậy cùng bầy sói. Tham gia cùng bầy sói để giết Dân làng. Tuy nhiên Tiên tri khi soi vào phản bội thì vẫn ra Dân làng.', color:'#ef4444' },
     { key:'seer', name:'🔮 Tiên tri', hint:'Mỗi đêm, Tiên tri chỉ tay vào một người. Quản trò sẽ cho biết người đó có phải là Ma sói hay không.', color:'#3b82f6' },
     { key:'witch', name:'🧙‍♂️ Phù thuỷ', hint:'Phù thủy sẽ có hai bình thuốc. Một bình thuốc để cứu 1 người và một bình thuốc để giết 1 người. Trong đêm, Quản trò sẽ cho biết ai sẽ bị giết trong đêm và hỏi xem Phù thủy có muốn sử dụng quyền năng nào hay không. Có thể dùng cả hai bình thuốc này vào cùng 1 đêm, nhưng mỗi bình chỉ dùng một lần.', color:'#3b82f6' },
-    { key:'hunter', name:'🏹 Thợ săn', hint:'Nếu Thợ săn chết, hắn lập tức được phép nhắm vào một người và người này sẽ bị chết. Nếu Thợ săn chết trong đêm, Quản trò sẽ đụng vai để báo cho THỢ SĂN nhắm bắn.', color:'#3b82f6' },
+    { key:'hunter', name:'🏹 Thợ săn', hint:'Nếu Thợ săn chết, hắn lập tức được phép nhắm vào một người và người này sẽ bị chết. Nếu Thợ săn chết trong đêm, Quản trò sẽ đụng vai để báo cho Thợ săn nhắm bắn.', color:'#3b82f6' },
     { key:'guard', name:'🛡️ Bảo vệ', hint:'Mỗi đêm, Bảo vệ chọn một người khác nhau để bảo vệ. Người chơi này sẽ bất tử vào đêm đó (nhưng không thể bảo vệ khỏi Phù thủy).', color:'#3b82f6' },
     { key:'spellcaster', name:'🔇 Nguyệt nữ', hint:'Mỗi đêm, Nguyệt nữ sẽ được phép chỉ định 1 người bị câm vào hôm sau. Người này vào ngày hôm sau sẽ không được nói (nếu người bị câm lỡ nói thì sẽ bị loại ngay lập tức). ', color:'#3b82f6' },
     { key:'doppelganger', name:'👥 Nhân bản', hint:'Vào đêm đầu tiên, Nhân bản tỉnh dậy và lựa chọn một người chơi. Nếu người chơi kia chết, Nhân bản sẽ bí mật lấy chức năng của người đó. Trước khi có chức năng mới, Nhân bản theo phe dân. Sau khi có chức năng mới, Nhân bản theo phe của chức năng này. ', color:'#10b981' },
@@ -1713,22 +1830,22 @@ function scheduleAutoSort(){
     { key:'tough guy', name:'💪 Lực sĩ', hint:'Nếu bị Ma sói cắn, Lực sĩ sẽ chết vào đêm tiếp theo chứ không phải ngay tại đêm đó.', color:'#3b82f6' },
     { key:'mayor', name:'⭐ Thị trưởng', hint:'Phiếu biểu quyết của Thị trưởng được tính là 2 phiếu khi biểu quyết treo cổ.', color:'#3b82f6' },
 
-{ key:'pssoi', name:'☄️ Pháp sư sói', hint:'Mỗi đêm, Pháp sư sói thức dậy và sẽ đi tìm kiếm Tiên tri bằng cách chỉ thị một người, Quản trò sẽ cho biết đó có phải là Tiên tri hay không. Ma sói không được biết Pháp sư sói là ai  và Pháp sư sói cũng không biết Ma sói là ai. Tiên tri sẽ soi Pháp sư sói là người.', color:'#ef4444' },
+{ key:'pssoi', name:'☄️ Pháp sư sói', hint:'Vào mỗi đêm, Pháp sư sói thức dậy và sẽ đi tìm kiếm Tiên tri bằng cách chỉ thị một người, Quản trò sẽ cho biết đó có phải là Tiên tri hay không. Ma sói không được biết Pháp sư sói là ai và Pháp sư sói cũng không biết Ma sói là ai. Tiên tri sẽ soi Pháp sư sói là người.', color:'#ef4444' },
 { key:'scuong', name:'💢 Sói cuồng', hint:'Một lần trong trò chơi, kể từ đêm thứ hai, Sói cuồng có thể sử dụng chức năng cuồng nộ. Khi bầy sói ở trạng thái cuồng nộ người bị bầy sói giết không thể sống sót( các lượt bảo vệ không phải từ Hiệp sĩ thì không thể ngăn chặn).', color:'#ef4444' },
 { key:'soidc', name:'☠️ Sói đại ca', hint:'Thức dậy cùng Ma sói. Chừng nào Sói đại ca còn tồn tại trong trò chơi thì mỗi đêm phe Ma sói có thể giết hai người chơi, miễn là hai người chơi đó ngồi cạnh nhau. Tuy nhiên phe Ma sói sẽ không biết ai là Sói đại ca. Đêm đầu tiên, Sói đại ca sẽ thức dậy một mình để cho Quản trò biết được người đó là ai.', color:'#ef4444' },
 { key:'soituyet', name:'❄️ Sói tuyết', hint:'Sói tuyết thức dậy cùng các Sói khác. Đêm đầu tiên thức dậy, Sói tuyết lựa chọn một người chơi khác làm bạn đồng hành. Nếu Sói tuyết chết người chơi đó cũng chết theo. Nếu người chơi đó chết thì Sói tuyết không chết.', color:'#ef4444' },
 { key:'alpha', name:'🌕 Sói đầu đàn', hint:'Một lần trong trò chơi, sau cái chết của một Ma sói khác vào ban ngày, vào đêm tiếp theo, Sói đầu đàn(Alpha) có thể biến mục tiêu của phe Ma Sói thành Ma sói thay vì bị giết. Nếu người chơi này được bảo vệ bởi một nguyên nhân nào đó thì vết cắn của Sói đầu đàn sẽ không có tác dụng. Khi đó Sói đầu đàn sẽ được cắn thêm một lần khác vào đêm sau.', color:'#ef4444' },
-{ key:'acmong', name:'🎃 Ác mộng', hint:'Một lần trong trò chơi, Sói ác mộng có thể gieo cơn ác mộng cho một người chơi và khiến chức năng của người đó bị vô hiệu trong đêm.', color:'#ef4444' },
+{ key:'acmong', name:'🎃 Ác mộng', hint:'Một lần trong trò chơi, vào ban đêm, Sói ác mộng có thể gieo cơn ác mộng cho một người chơi và khiến chức năng của người đó bị vô hiệu trong đêm.', color:'#ef4444' },
 { key:'hbi', name:'✨ Huyền Bí', hint:'Mỗi đêm, Tiên tri Huyền bí sẽ tỉnh dậy và chỉ định một người. Quản trò sẽ cho Tiên tri Huyền bí biết chính xác người chơi này là chức năng gì.', color:'#3b82f6' },
 { key:'dbom', name:'💣️ Đánh bom', hint:'Nếu Đánh bom  bị loại, thì hai người chơi bên trái và phải của người chơi này sẽ cùng bị loại (không tính những người chơi đã bị loại rồi).', color:'#3b82f6' },
-{ key:'tvan', name:'🔭 Thiên văn', hint:'Mỗi đêm, Thiên văn sẽ tỉnh dậy và có thể chỉ vào một người chơi để gọi mưa sao băng. Nếu người chơi đó là Ma sói, người đó sẽ loại. Nếu không, Thiên văn sẽ bị loại.', color:'#3b82f6' },
-{ key:'lgac', name:'⚔️ Lính gác', hint:'Một lần trong trò chơi, kể từ sáng thứ hai, Lính gác có thể chỉ định giết một người chơi nếu nghi ngờ.', color:'#3b82f6' },
+{ key:'tvan', name:'🔭 Thiên văn', hint:'Mỗi đêm, Thiên văn sẽ tỉnh dậy và có thể chỉ vào một người chơi để gọi mưa sao băng. Nếu người chơi đó là Ma sói, người đó sẽ bị loại. Nếu không, Thiên văn sẽ bị loại.', color:'#3b82f6' },
+{ key:'lgac', name:'⚔️ Lính gác', hint:'Một lần trong trò chơi, kể từ sáng thứ hai, Lính gác có thể chỉ định giết một người chơi nếu nghi ngờ. Nhưng vai trò của bạn sẽ bị tiết lộ khi giết người chơi khác.', color:'#3b82f6' },
 { key:'gsu',  name:'👨‍🏫 Giáo sư', hint:'Mỗi Đêm, Giáo sư tỉnh dậy và chỉ định hai người chơi. Quản trò sẽ cho biết hai người chơi này có cùng phe với nhau hay không.', color:'#3b82f6' },
 { key:'tsu', name:'🔮 Tập sự', hint:'Nếu Tiên tri chết, Tiên tri Tập sự sẽ trở thành Tiên tri mới. Tiên tri Tập sự được thông báo trong đêm, vào lượt gọi Tiên tri, Quản trò đụng vào vai của Tiên tri Tập sự để gọi dậy.', color:'#3b82f6' },
 { key:'hquang', name:'🧿 Hào quang', hint:'Tiên tri Hào quang thức dậy mỗi đêm để kiểm tra người chơi có chức năng hay không, trường hợp không có chức năng là Dân thường và Sói thường.', color:'#3b82f6' },
 { key:'nbenh', name:'🤒 Người bệnh', hint:'Nếu Người bệnh bị Ma sói cắn, thì Ma sói sẽ không thể cắn người nào vào đêm tiếp theo do bị bệnh.', color:'#3b82f6' },
 { key:'cma', name:'👻 Con ma', hint:'Con ma bị chết ngay vào đêm đầu tiên. Mỗi đêm( bao gồm cả đêm đầu tiên), Con ma có thể liên hệ với những người chơi khác bằng cách viết 1 chữ lên 1 tờ giấy nhưng không được viết tên hay viết tắt tên, mà thay vào đó là đưa ra các gợi ý thú vị.', color:'#3b82f6' },
-{ key:'hbinh', name:'🤝 Hòa bình', hint:'Một lần trong trò chơi, Người yêu hòa bình ngăn chặn một lần biểu quyết treo cổ.', color:'#3b82f6' },
+{ key:'hbinh', name:'🤝 Hòa bình', hint:'Một lần trong trò chơi, Người yêu hòa bình ngăn chặn một lần biểu quyết treo cổ. Quản trò sẽ để ý hành động biểu quyết của bạn.', color:'#3b82f6' },
 { key:'ttu', name:'🕵‍♂ Thám tử', hint:'Một lần trong trò chơi, vào ban đêm, Thám tử sẽ được gọi dậy và được phép chọn 1 một người. Quản trò sẽ cho Thám tử biết người đó hoặc hai người bên cạnh người đó có phải là Ma sói hay không.', color:'#3b82f6' },
 { key:'hsi', name:'💂‍♂ Hiệp sĩ', hint:'Một lần trong trò chơi, vào ban đêm, Hiệp sĩ có thể chọn một người chơi để được bảo vệ. Người chơi này sẽ bất tử vào tất cả các đêm. Chỉ bị loại bởi các lí do vào ban ngày. ( như bị treo cổ).', color:'#3b82f6' },
 { key:'blang', name:'🐆 Báo làng', hint:'Mỗi đêm, Quản trò sẽ hỏi “Báo làng có muốn quậy phá không?”. Nếu đồng ý, Báo làng sẽ tỉnh dậy và ra hiệu bằng cách gật đầu. Ngày hôm sau, sẽ có 2 lượt biểu quyết treo cổ. Báo làng chỉ thực hiện được 1 lần quậy phá trong suốt cả ván chơi.', color:'#3b82f6' },
@@ -2547,6 +2664,78 @@ $.openArchiveBtn?.addEventListener('click', () => notesArchiveModal.open());
 
     updateSlotsLeft();
   }
+
+// ===== Modal 'Thứ tự kêu dậy' =====
+const nightOrderModal = {
+  wrap: document.getElementById('nightOrderModal'),
+  body: document.getElementById('nightOrderBody'),
+  btnClose: document.getElementById('nightOrderClose'),
+  open(){
+    this.render();
+    this.wrap.classList.add('show');
+    this.wrap.setAttribute('aria-hidden','false');
+    this.btnClose?.focus();
+  },
+  close(){
+    this.wrap.classList.remove('show');
+    this.wrap.setAttribute('aria-hidden','true');
+  },
+  render(){
+    this.body.innerHTML = `
+      <p class="intro">— Thứ tự kêu dậy mỗi đêm —<br>
+      <em>(Con ma chết ngay đêm đầu tiên)</em></p>
+
+      <ol start="1">
+        <li>Cupid          (1 lần đêm đầu tiên)</li>
+        <li>Sói đại ca     (1 lần đêm đầu tiên)</li>
+        <li>Đầu gấu</li>
+        <li>Bầy sói gồm: Ác mộng + Ma sói + Phản bội + Sói con + Sói cuồng + Sói đại ca + Sói đầu đàn + Sói tuyết + Sói trắng
+          <div class="sub">Thứ tự hành động của phe Ma sói:</div>
+          <div class="sub">Ác mộng / Sói con / Sói cuồng / Sói đầu đàn / Sói tuyết</div>
+        </li>
+        <li>Pháp sư sói</li>
+        <li>Sói trắng</li>
+        <li>Ma cà rồng</li>
+        <li>Giáo chủ</li>
+        <li>Hiệp sĩ</li>
+        <li>Bảo vệ</li>
+        <li>Phù thủy</li>
+        <li>Thiên văn</li>
+        <li>Thợ săn</li>
+        <li>Thám tử</li>
+        <li>Tiên tri</li>
+        <li>Tiên tri_Hào quang</li>
+        <li>Tiên tri_Huyền bí</li>
+        <li>Giáo sư</li>
+        <li>Nguyệt nữ</li>
+        <li>Báo làng</li>
+      </ol>
+
+      <div class="section">Kêu dậy 1 lần đêm đầu tiên</div>
+
+      <ol start="21">
+        <li>Lính gác</li>
+        <li>Hoàng tử</li>
+        <li>Thị trưởng</li>
+        <li>Hòa bình</li>
+        <li>Người bệnh</li>
+        <li>Lực sĩ</li>
+        <li>Tiên tri_Tập sự</li>
+        <li>Dân làng</li>
+        <li>Già làng</li>
+        <li>Nhân bản</li>
+        <li>Bị nguyền</li>
+        <li>Đánh bom</li>
+        <li>Chán đời</li>
+      </ol>`;
+  }
+};
+
+// mở/đóng + hành vi giống các modal khác
+document.getElementById('nightOrderBtn')?.addEventListener('click', () => nightOrderModal.open());
+nightOrderModal.btnClose?.addEventListener('click', ()=> nightOrderModal.close());
+nightOrderModal.wrap?.addEventListener('click', (e)=>{ if(e.target===nightOrderModal.wrap) nightOrderModal.close(); });
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') nightOrderModal.close(); });
 
   init();
 })();
