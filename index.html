@@ -6,7 +6,7 @@
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="robots" content="index, follow">
   <meta name="google-site-verification" content="RyYI1D4fytaPnB3dJ_bwJRKE2qxGE0iKDVuzDKWyIRU" />
-  <title>Werewolf Assistant | Wev Hổ Trợ Quản Trò Ma Sói</title>
+  <title>Werewolf Assistant | Web Hổ Trợ Quản Trò Ma Sói</title>
   <style>
     :root{
       --bg: #0f1222;
@@ -1679,6 +1679,42 @@ header {
   object-fit: contain;
   filter: drop-shadow(0 0 1px rgba(0,0,0,.25));
 }
+/* Ellipsis 10 ký tự cho tên vai */
+.truncate-10{
+  display:inline-block;
+  max-width: 10ch;              /* ~10 ký tự */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+/* Giữ pill (vai trò) trên 1 dòng và cắt ... phần tên bên trong */
+.roles .pill{ white-space: nowrap; }
+.roles .pill .role-name{ display:inline-block; max-width:10ch; overflow:hidden; text-overflow:ellipsis; }
+
+/* Cột Vai trò trong bảng phân vai: không xuống dòng + cắt ... phần tên */
+.assignments td.role{ white-space: nowrap !important; }
+.assignments td.role .role-name{ display:inline-block; max-width:10ch; overflow:hidden; text-overflow:ellipsis; }
+/* TÊN VAI: luôn chiếm đúng 10 ký tự để viền pill không ngắn dài lộn xộn */
+.truncate-10{
+  display:inline-block;
+  width: 10ch;                 /* ⟵ cố định 10 ký tự (thay vì max-width) */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Đảm bảo pill không xuống dòng */
+.roles .pill{ white-space: nowrap; }
+/* Footer meta của modal mô tả vai – hiển thị như text thân bài */
+#roleModalBody .role-meta-footer{
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  white-space: normal;      /* cho phép xuống dòng khi hẹp */
+}
 
   </style>
 </head>
@@ -1941,7 +1977,7 @@ header {
     "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
   }[m]));
   function auraLabel(v){ return Number(v)===1 ? 'Ác' : 'Thiện'; }
-  function funcLabel(v){ return Number(v)===1 ? '0' : 'Có'; }
+  function funcLabel(v){ return Number(v)===1 ? 'Không' : 'Có'; }
   const $ = {
     playerCount: qs('#playerCount'),
     namesWrap: qs('#names'),
@@ -1979,7 +2015,6 @@ header {
     openArchiveBtn: qs('#openArchiveBtn'),
   };
 
-  // ===== Modal helpers =====
 // ===== Modal vai trò =====
 const modal = {
   wrap: document.getElementById('roleModal'),
@@ -1987,82 +2022,74 @@ const modal = {
   body: document.getElementById('roleModalBody'),
   btnClose: document.getElementById('roleModalClose'),
 
-  open(title, text, opts = {}) {
-    const { key, custom } = opts;
+  open(titleArg, text, opts = {}) {
+    try {
+      const { key, custom } = opts || {};
 
-    // Chip Hào quang/Chức năng như cũ
-    let chips = '';
-    if (custom) {
-      chips = `
-        <span class="chip">Hào quang: Tùy chỉnh</span>
-        <span class="chip">Chức năng: Tùy chỉnh</span>`;
-    } else if (key && ROLE_META[key]) {
-      const { aura = 0, func = 0 } = ROLE_META[key];
-      const auraLabel = v => Number(v)===1 ? 'Ác' : 'Thiện';
-      const funcLabel = v => Number(v)===1 ? '0' : 'Có';
-      chips = `
-        <span class="chip">Hào quang: ${auraLabel(aura)}</span>
-        <span class="chip">Chức năng: ${funcLabel(func)}</span>`;
-    }
+      // ---- Tính PHE để hiển thị ở footer ----
+      const cls2name  = { 'f-wolf':'Ma sói', 'f-vil':'Dân Làng', 'f-swap':'Đổi Phe', 'f-third':'Phe Thứ 3' };
+      const code2name = { wolf:'Ma sói', village:'Dân Làng', swap:'Đổi Phe', third:'Phe Thứ 3' };
 
-    // ---- TÍNH "Phe" để gắn vào tiêu đề ----
-    const cls2name = {
-      'f-wolf' : 'Ma sói',
-      'f-vil'  : 'Dân làng',
-      'f-swap' : 'Đổi phe',
-      'f-third': 'Phe thứ 3'
-    };
-    const code2name = {
-      wolf:'Ma sói', village:'Dân làng', swap:'Đổi phe', third:'Phe thứ 3'
-    };
-
-    let factionLabel = 'Phe thứ 3'; // fallback an toàn
-
-    try{
+      let factionLabel = 'Phe Thứ 3';
       if (custom) {
-        // title của custom đang là "🧩 Tên"; lấy tên thô để dò trong STATE.customRoles
-        const rawName = String(title||'').replace(/^🧩\s*/,'').trim();
-        const fcode = STATE?.customRoles?.[rawName]?.faction || 'third';
-        factionLabel = code2name[fcode] || 'Phe thứ 3';
+        const rawName = String(titleArg || '').replace(/^🧩\s*/, '').trim();
+        const fcode = (STATE && STATE.customRoles && STATE.customRoles[rawName]
+                      && STATE.customRoles[rawName].faction) || 'third';
+        factionLabel = code2name[fcode] || 'Phe Thứ 3';
       } else {
-        // Vai mặc định: dò theo tên hiển thị (có emoji) bằng hàm factionOf
-        // (hàm này đã có sẵn và hoisted)
-        const display = title || (DEFAULT_ROLES.find(r=>r.key===key)?.name) || '';
-        const f = factionOf(display); // -> {order, cls: 'f-wolf' | 'f-vil' | ...}
-        factionLabel = cls2name[f?.cls] || 'Phe thứ 3';
+        const display = titleArg || ((DEFAULT_ROLES.find(r => r.key === key) || {}).name) || '';
+        const f = factionOf(display);
+        factionLabel = (f && cls2name[f.cls]) || 'Phe Thứ 3';
       }
-    }catch{}
 
-    // ---- Gắn tiêu đề: Icon + Tên + “· Phe: …” (inline), sau đó mới tới các chip ----
-const safeTitle = (title && title.replace)
-  ? title.replace(/</g,'&lt;').replace(/>/g,'&gt;')
-  : 'Vai trò';
+      // ---- Hào quang / Chức năng (footer) ----
+      let auraTxt = 'Tùy chỉnh', funcTxt = 'Tùy chỉnh';
+      if (!custom && key && typeof ROLE_META === 'object' && ROLE_META[key]) {
+        const m = ROLE_META[key];
+        auraTxt = (typeof auraLabel === 'function') ? auraLabel(m.aura ?? 0) : '';
+        funcTxt = (typeof funcLabel === 'function') ? funcLabel(m.func ?? 0) : '';
+      }
 
-// --- Tạo tiêu đề có icon ảnh (nếu có) + tên + · Phe: ---
-const plainTitle = stripLeadingEmoji(title||'');            // "Giáo chủ"
-const leadingEmoji = (title||'').match(/^[^\p{L}\p{N}]+/u)?.[0] || ''; // "🦹"
-const iconHTML = key
-  ? roleIconHTMLByKey(key, leadingEmoji, plainTitle)
-  : leadingEmoji;  // custom thì chưa có key -> giữ emoji gốc
+      // ---- Tiêu đề: CHỈ icon + tên (không “· Phe …”, không chip) ----
+      const displayTitle = String(titleArg || ((DEFAULT_ROLES.find(r => r.key === key) || {}).name) || 'Vai trò');
+      const plainTitle = (typeof stripLeadingEmoji === 'function')
+        ? stripLeadingEmoji(displayTitle)
+        : displayTitle.replace(/^[^\w]+/, ''); // fallback nhẹ
 
-this.title.innerHTML = `
-  ${iconHTML}<span class="role-label">${esc(plainTitle || 'Vai trò')} <span class="faction-inline">· Phe: ${esc(factionLabel)}</span></span>
-  ${chips ? `<span style="margin-left:10px;display:inline-flex;gap:8px;vertical-align:middle">${chips}</span>` : ''}`;
+      const iconHTML = (key && typeof roleIconHTMLByKey === 'function')
+        ? roleIconHTMLByKey(key, '', plainTitle)
+        : '';
 
-    this.body.textContent = text || '';
-    this.wrap.classList.add('show');
-    this.wrap.setAttribute('aria-hidden','false');
-    this.btnClose.focus();
+      this.title.innerHTML = `${iconHTML}<span class="role-label">${esc(plainTitle || 'Vai trò')}</span>`;
+
+      // ---- Thân: mô tả + FOOTER meta (text thuần, không viền/chip) ----
+      this.body.textContent = text || '';
+
+      const footer = document.createElement('div');
+      footer.className = 'role-meta-footer';
+      footer.textContent = `Phe: ${factionLabel} | Hào quang: ${auraTxt} | Chức năng: ${funcTxt}`;
+      this.body.appendChild(footer);
+
+      // ---- Mở modal ----
+      this.wrap.classList.add('show');
+      this.wrap.setAttribute('aria-hidden', 'false');
+      this.btnClose && this.btnClose.focus();
+    } catch (err) {
+      console.error('roleModal.open error:', err);
+      alert('Có lỗi khi mở mô tả vai. Hãy mở Console (F12) để xem chi tiết.');
+    }
   },
-  close(){
+
+  close() {
     this.wrap.classList.remove('show');
     this.wrap.setAttribute('aria-hidden','true');
-}
+  }
 };
 
-modal.btnClose.addEventListener('click', ()=> modal.close());
-modal.wrap.addEventListener('click', (e)=> { if (e.target === modal.wrap) modal.close(); });
-document.addEventListener('keydown', (e)=> { if (e.key === 'Escape') modal.close(); });
+// Gắn event cho modal
+modal.btnClose?.addEventListener('click', () => modal.close());
+modal.wrap?.addEventListener('click', (e) => { if (e.target === modal.wrap) modal.close(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.close(); });
   
   // ===== Modal: Chọn mục tiêu cho 👥 Nhân bản =====
 const doppelModal = {
@@ -2203,6 +2230,7 @@ document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') doppelModal.clo
     playersArchive: [],    // các bản lưu danh sách người chơi
     playersSaveSeq: 0,     // đếm số lần lưu danh sách
     doppelTargets: {},        // { holderName: targetName }
+    headhunterTargets: {},   // { hunterName: targetName } cho "Thợ săn người"
     apprenticePromoted: false, 
     firstKillPromptShown: false,
 
@@ -2217,75 +2245,76 @@ document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') doppelModal.clo
 // PHE MA SÓI
 { key:'werewolf', name:'🐺 Ma Sói', hint:'Vào mỗi đêm, Ma Sói sẽ tỉnh dậy cùng Bầy Sói và thống nhất giết 1 người chơi. Bầy sói có thể không giết người nào và không được giết các sói khác. Ma Sói chiến thắng khi số Dân Làng < hoặc = số Ma Sói và không còn Sói Trắng.', color:'#ef4444' },
 { key:'werecub', name:'🐺 Sói Con', hint:'Sói Con thức dậy cùng bầy sói mỗi đêm. Nếu Sói Con bị giết, Ma Sói còn lại sẽ giết 2 người vào đêm hôm sau. Bầy Sói có thể chọn giết Sói con như 1 sự hy sinh (Tất cả Bầy Sói bao gồm cả Sói Con đều đồng ý việc đó) khi đó Bầy Sói có thể lập tức giết 2 người chơi khác vào đêm hôm đó. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
-{ key:'minion', name:'🎭️ Kẻ Phản Bội', hint:'Kẻ Phản Bội thức dậy cùng Bầy Sói. Tham gia cùng Bầy Sói để giết Dân Làng. Tuy nhiên Tiên Tri khi soi vào Kẻ Phản Bội thì vẫn là Dân Làng. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
-{ key:'pssoi', name:'☄️ Sói Phù Thủy', hint:'Vào mỗi đêm, Sói Phù Thủy thức dậy và sẽ đi tìm kiếm Tiên Tri bằng cách chỉ thị 1 người chơi, Quản Trò sẽ cho biết đó có phải là Tiên Tri hay không. Ma Sói không được biết Sói Phù Thủy là ai và Sói Phù Thủy cũng không biết Ma Sói là ai. Tiên Tri sẽ soi Sói Phù Thủy là Dân Làng. Sói Phù Thủy có thể từ bỏ chức năng để trở thành Ma Sói và tham gia với Bầy Sói. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
-{ key:'scuong', name:'💢 Sói Điên Cuồng', hint:'Một lần trong trò chơi, kể từ đêm thứ hai, Sói Điên Cuồng có thể sử dụng tiếng còi cuồng nộ. Khi Bầy Sói ở trạng thái cuồng nộ, nạn nhân bị Bầy Sói tấn công không thể sống sót (các lượt bảo vệ không phải từ Hiệp Sĩ, đều sẽ chết theo nạn nhân). Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
-{ key:'soidc', name:'☠️ Sói Đầu Đàn', hint:'Thức dậy cùng Ma sói. Chừng nào Sói Đầu Đàn còn tồn tại trong trò chơi thì mỗi đêm phe Ma Sói có thể giết 2 người chơi, miễn là 2 người chơi đó ngồi cạnh nhau. Tuy nhiên phe Ma Sói sẽ không biết ai là Sói Đầu Đàn. Đêm đầu tiên, Sói Đầu Đàn sẽ thức dậy một mình để cho Quản Trò biết được người đó là ai. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
-{ key:'soituyet', name:'❄️ Sói Tuyết', hint:'Sói Tuyết thức dậy cùng Bầy Sói. Đêm đầu tiên thức dậy, Sói Tuyết lựa chọn một người chơi khác làm bạn đồng hành. Nếu Sói Tuyết chết người chơi đó cũng chết theo. Nếu người chơi đó chết thì Sói Tuyết không chết. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
-{ key:'alpha', name:'🐱 Sói Mèo Con', hint:'Một lần trong trò chơi, sau khi một Ma Sói khác bị treo cổ vào ban ngày, vào đêm tiếp theo, Sói Mèo Con có thể biến mục tiêu của phe Ma Sói thành Ma sói thay vì bị giết. Nếu người chơi này được bảo vệ bởi một nguyên nhân nào đó thì vết cắn của Sói Mèo Con sẽ không có tác dụng. Khi đó Sói Mèo Con sẽ được cắn thêm một lần khác vào đêm sau. Nhưng nếu cắn trúng Sói Phù Thủy và các vai tro giết người thuộc phe Thứ 3 thì sẽ mất tác dụng vĩnh viễn. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
-{ key:'acmong', name:'🎃 Sói Ác Mộng', hint:'Một lần trong trò chơi, vào ban đêm, Sói Ác Mộng có thể gieo cơn ác mộng cho một người chơi và khiến chức năng của người đó bị vô hiệu trong đêm. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
+{ key:'minion', name:'🐺 Kẻ Phản Bội', hint:'Kẻ Phản Bội thức dậy cùng Bầy Sói. Tham gia cùng Bầy Sói để giết Dân Làng. Tuy nhiên Tiên Tri khi soi vào Kẻ Phản Bội thì vẫn là Dân Làng. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
+{ key:'pssoi', name:'🐺 Sói Phù Thủy', hint:'Vào mỗi đêm, Sói Phù Thủy thức dậy và sẽ đi tìm kiếm Tiên Tri bằng cách chỉ thị 1 người chơi, Quản Trò sẽ cho biết đó có phải là Tiên Tri hay không. Ma Sói không được biết Sói Phù Thủy là ai và Sói Phù Thủy cũng không biết Ma Sói là ai. Tiên Tri sẽ soi Sói Phù Thủy là Dân Làng. Sói Phù Thủy có thể từ bỏ chức năng để trở thành Ma Sói và tham gia với Bầy Sói. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
+{ key:'scuong', name:'🐺 Sói Điên Cuồng', hint:'Một lần trong trò chơi, kể từ đêm thứ hai, Sói Điên Cuồng có thể sử dụng tiếng còi cuồng nộ. Khi Bầy Sói ở trạng thái cuồng nộ, nạn nhân bị Bầy Sói tấn công không thể sống sót (các lượt bảo vệ không phải từ Hiệp Sĩ, đều sẽ chết theo nạn nhân). Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
+{ key:'soidc', name:'🐺 Sói Đầu Đàn', hint:'Thức dậy cùng Ma sói. Chừng nào Sói Đầu Đàn còn tồn tại trong trò chơi thì mỗi đêm phe Ma Sói có thể giết 2 người chơi, miễn là 2 người chơi đó ngồi cạnh nhau. Tuy nhiên phe Ma Sói sẽ không biết ai là Sói Đầu Đàn. Đêm đầu tiên, Sói Đầu Đàn sẽ thức dậy một mình để cho Quản Trò biết được người đó là ai. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
+{ key:'soituyet', name:'🐺 Sói Tuyết', hint:'Sói Tuyết thức dậy cùng Bầy Sói. Đêm đầu tiên thức dậy, Sói Tuyết lựa chọn một người chơi khác làm bạn đồng hành. Nếu Sói Tuyết chết người chơi đó cũng chết theo. Nếu người chơi đó chết thì Sói Tuyết không chết. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
+{ key:'alpha', name:'🐺 Sói Mèo Con', hint:'Một lần trong trò chơi, sau khi một Ma Sói khác bị treo cổ vào ban ngày, vào đêm tiếp theo, Sói Mèo Con có thể biến mục tiêu của phe Ma Sói thành Ma sói thay vì bị giết. Nếu người chơi này được bảo vệ bởi một nguyên nhân nào đó thì vết cắn của Sói Mèo Con sẽ không có tác dụng. Khi đó Sói Mèo Con sẽ được cắn thêm một lần khác vào đêm sau. Nhưng nếu cắn trúng Sói Phù Thủy và các vai tro giết người thuộc phe Thứ 3 thì sẽ mất tác dụng vĩnh viễn. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
+{ key:'acmong', name:'🐺 Sói Ác Mộng', hint:'Một lần trong trò chơi, vào ban đêm, Sói Ác Mộng có thể gieo cơn ác mộng cho một người chơi và khiến chức năng của người đó bị vô hiệu trong đêm. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
 { key:'spsu', name:'🐺 Sói Pháp Sư', hint:'Hai lần trong trò chơi, vào ban đêm, Sói Pháp Sư có thể yểm phép vào 1 người chơi, các vai trò thông tin thuộc phe Dân Làng và phe Thứ 3 khi kiểm tra người chơi đó đều được kết quả ngược lại.  Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
 { key:'shve', name:'🐺 Sói Hộ Vệ', hint:'Một lần trong trò chơi, vào ban đêm, Sói Hộ Vệ có thể chọn ra một Ma Sói trong bầy để bảo vệ, Ma Sói đó sẽ không bị treo cổ vào buổi sáng. Chức năng sẽ không tiêu hao khi Ma Sói đó không bị treo cổ. Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
 { key:'stthuat', name:'🐺 Sói Tà Thuật', hint:'Hai lần trong trò chơi, vào ban đêm, Sói Tà Thuật có thể làm câm lặng một người chơi, chặn họ nói chuyện và bỏ phiếu (người vi phạm sẽ bị loại ngay lập tức) Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
 { key:'shbinh', name:'🐺 Sói Hòa Bình', hint:'Một lần trong trò chơi, vào ban đêm, Sói Hòa Bình có thể ngăn chặn cuộc bỏ phiếu vào buổi sáng hôm sau. Quản Trò sẽ thông báo "Người Yêu Hòa Bình đã chặn cuộc bỏ phiếu vào hôm nay.". Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
 { key:'sdto', name:'🐺 Sói Độc Tố', hint:'Hai lần trong trò chơi, vào ban đêm, Sói Độc Tốt có thể đầu độc 1 người chơi, người chơi đó sẽ bị Bầy Sói tấn công bỏ qua các lượt bảo vệ (trừ lượt bảo vệ từ Hiệp Sĩ).  Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
 { key:'sptach', name:'🐺 Sói Phân Tách', hint:'Một lần trong trò chơi, vào ban đêm, Sói ác mộng có thể gieo cơn ác mộng cho một người chơi và khiến chức năng của người đó bị vô hiệu trong đêm.', color:'#ef4444' },
+{ key:'sttri', name:'🐺 Sói Tiên Tri', hint:'Hai lần trong trò chơi, vào ban đêm, Sói Độc Tốt có thể đầu độc 1 người chơi, người chơi đó sẽ bị Bầy Sói tấn công bỏ qua các lượt bảo vệ (trừ lượt bảo vệ từ Hiệp Sĩ).  Điều kiện thắng: Thắng cùng phe Ma Sói.', color:'#ef4444' },
 // PHE DÂN LÀNG
-{ key:'seer', name:'🔮 Thầy Bói', hint:'Mỗi đêm, Thầy Bói chỉ tay vào một người. Quản trò sẽ cho biết người đó có hào quang là Thiện hay Ác. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'witch', name:'🧙‍♂️ Phù Thuỷ', hint:'Phù Thủy sẽ có hai bình thuốc. Một bình thuốc để cứu 1 người và một bình thuốc để giết 1 người. Trong đêm, Quản Trò sẽ cho biết ai sẽ bị giết trong đêm và hỏi xem Phù Thủy có muốn sử dụng quyền năng nào hay không. Có thể dùng cả hai bình thuốc này vào cùng 1 đêm, nhưng mỗi bình chỉ dùng một lần. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'hunter', name:'🏹 Thợ Săn Quái Thú', hint:'Nếu Thợ Săn Quái Thú chết, hắn lập tức được phép nhắm vào một người chơi và người chơi này sẽ chết theo hắn. Nếu Thợ Săn Quái Thú chết trong đêm, Quản Trò sẽ đụng vai để báo cho Thợ Săn Quái Thú nhắm bắn. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'guard', name:'🛡️ Bảo Vệ', hint:'Mỗi đêm, Bảo Vệ có thể chọn một người khác nhau để bảo vệ. Người chơi này sẽ được an toàn vào đêm đó (nhưng không thể bảo vệ khỏi Phù thủy). Bảo Vệ có tổng cộng 2 mạng, nếu chặn được sói, Bảo Vệ sẽ mất đi 1 mạng. Bảo Vệ luôn tự bảo vệ mình. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'spellcaster', name:'🔇 Bà Già Khó Tính', hint:'Mỗi đêm, Bà Già Khó Tính sẽ được phép chỉ định 1 người không được nói chuyện và bỏ phiếu vào hôm sau (nếu người bị câm lỡ nói thì sẽ bị loại ngay lập tức). Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'seer', name:'👨🏻‍🌾 Thầy Bói', hint:'Mỗi đêm, Thầy Bói chỉ tay vào một người. Quản trò sẽ cho biết người đó có hào quang là Thiện hay Ác. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'witch', name:'👨🏻‍🌾 Phù Thuỷ', hint:'Phù Thủy sẽ có hai bình thuốc. Một bình thuốc để cứu 1 người và một bình thuốc để giết 1 người. Trong đêm, Quản Trò sẽ cho biết ai sẽ bị giết trong đêm và hỏi xem Phù Thủy có muốn sử dụng quyền năng nào hay không. Có thể dùng cả hai bình thuốc này vào cùng 1 đêm, nhưng mỗi bình chỉ dùng một lần. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'hunter', name:'👨🏻‍🌾 Thợ Săn Quái Thú', hint:'Nếu Thợ Săn Quái Thú chết, hắn lập tức được phép nhắm vào một người chơi và người chơi này sẽ chết theo hắn. Nếu Thợ Săn Quái Thú chết trong đêm, Quản Trò sẽ đụng vai để báo cho Thợ Săn Quái Thú nhắm bắn. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'guard', name:'👨🏻‍🌾 Bảo Vệ', hint:'Mỗi đêm, Bảo Vệ có thể chọn một người khác nhau để bảo vệ. Người chơi này sẽ được an toàn vào đêm đó (nhưng không thể bảo vệ khỏi Phù thủy). Bảo Vệ có tổng cộng 2 mạng, nếu chặn được sói, Bảo Vệ sẽ mất đi 1 mạng. Bảo Vệ luôn tự bảo vệ mình. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'spellcaster', name:'👨🏻‍🌾 Bà Già Khó Tính', hint:'Mỗi đêm, Bà Già Khó Tính sẽ được phép chỉ định 1 người không được nói chuyện và bỏ phiếu vào hôm sau (nếu người bị câm lỡ nói thì sẽ bị loại ngay lập tức). Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
 { key:'village', name:'👨🏻‍🌾 Dân Làng', hint:'Không có chức năng đặc biệt nào cả, ngủ suốt đêm và tham gia biểu quyết tìm Ma Sói vào ban ngày. Dân Làng thắng khi tiêu diệt được toàn bộ Ma Sói và các vai trò giết người thuộc phe Thứ 3.', color:'#3b82f6' },
-{ key:'prince', name:'👑 Công Chúa', hint:'Công Chúa không thể bị treo cổ chết. Vào lần bị vote chết và chuẩn bị treo cổ, người này sẽ lật lá bài lên để mọi người được thấy và không phải chịu treo cổ. Tất cả người chơi lập tức đi ngủ. Lá bài này đi kèm với Hiệp Sĩ. Điều kiện thắng: Thắng cùng phe Dân Làng. ', color:'#3b82f6' },
-{ key:'elder', name:'👴 Già Làng', hint:'Già Làng có 2 mạng sống. Nếu chết cả 2 lần thì các quyền năng (Tiên tri, Bảo vệ,…) của nhân vật khác sẽ mất đi trong đêm tiếp theo. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'tough guy', name:'💪 Lực Sĩ', hint:'Nếu bị Ma Sói cắn, Lực Sĩ sẽ được Quản Trò khều dậy riêng để cho biết con sói cắn mình và Lực Sĩ sẽ chết vào đêm tiếp theo chứ không phải ngay tại đêm đó. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'mayor', name:'⭐ Thị Trưởng', hint:'Phiếu biểu quyết của Thị Trưởng được tính là 2 phiếu khi biểu quyết treo cổ. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'hbi', name:'✨ Tiên Tri', hint:'Mỗi đêm, Tiên Tri sẽ tỉnh dậy và chỉ định một người. Quản Trò sẽ cho Tiên Tri biết chính xác người chơi này là chức năng gì. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'dbom', name:'💣️ Kẻ Đánh Bom', hint:'Nếu Kẻ Đánh Bom  bị loại, thì hai người chơi bên trái và phải của người chơi này sẽ cùng bị loại (không tính những người chơi đã bị loại rồi). Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'tvan', name:'🔭 Nhà Thiên Văn Học', hint:'Mỗi đêm, Nhà Thiên Văn Học sẽ tỉnh dậy và có thể chỉ vào một người chơi để gọi mưa sao băng. Nếu người chơi đó là Ma Sói, người đó sẽ bị loại. Nếu không, Nhà Thiên Văn Học sẽ bị loại. Ngoài ra, nếu trong ván có Sói Điên Cuồng hoặc Sói Độc Tố, Nhà Thiên Văn Học có 1 lần gọi trăng khuyết để vô hiệu mọi chức năng của phe Ma Sói. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'lgac', name:'⚔️ Người Canh Gác', hint:'Một lần trong trò chơi, kể từ đêm thứ hai, Người Canh Gác có thể chỉ định giết một người chơi nếu nghi ngờ. Ngoài ra, Người Canh Gác còn có 1 lần kiểm tra vai trò thật của 1 người chơi vào ban đêm. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'gsu',  name:'👨‍🏫 Thám Tử', hint:'Mỗi Đêm, Thám Tử tỉnh dậy và chỉ định hai người chơi. Quản Trò sẽ cho biết hai người chơi này có cùng phe với nhau hay không. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'tsu', name:'🔮 Tiên Tri Tập Sự', hint:'Nếu vai trò thông tin thuộc phe dân chết, Tiên Tri Tập Sự sẽ trở thành vai trò thông tin đó mới. Tiên tri Tập sự được thông báo trong đêm, vào lượt gọi của vai trò thông tin đó, Quản trò đụng vào vai của Tiên Tri Tập Sự để gọi dậy. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'hquang', name:'🧿 Tiên Tri Hào Quang', hint:'Tiên Tri Hào Quang thức dậy mỗi đêm để kiểm tra người chơi có chức năng hay không (Chức năng: Có/0). Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'nbenh', name:'🤒 Người Bệnh', hint:'Nếu Người Bệnh bị Ma Sói cắn, thì Ma Sói sẽ không thể cắn người nào vào đêm tiếp theo do bị bệnh. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'cma', name:'👻 Con Ma', hint:'Con Ma bị chết ngay vào đêm đầu tiên. Mỗi đêm( bao gồm cả đêm đầu tiên), Con ma có thể liên hệ với những người chơi khác bằng cách viết 1 chữ lên 1 tờ giấy nhưng không được viết tên hay viết tắt tên, mà thay vào đó là đưa ra các gợi ý thú vị. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'hbinh', name:'🤝 Người Yêu Hòa Bình', hint:'Một lần trong trò chơi, vào ban đêm, Người Yêu Hòa Bình có thể chặn cuộc bỏ phiếu vào ngày hôm sau. Quản Trò sẽ thông báo "Người Yêu Hòa Bình đã chặn cuộc bỏ phiếu vào hôm nay.". Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'ttu', name:'🕵‍♂ Cảnh Sát Trưởng', hint:'Một lần trong trò chơi, vào ban đêm, Cảnh Sát Trưởng sẽ được gọi dậy và được phép chọn 1 một người. Quản Trò sẽ cho Cảnh Sát Trưởng biết người đó hoặc hai người bên cạnh người đó có phải là Ma Sói hay không. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'hsi', name:'💂‍♂ Hiệp Sĩ', hint:'Một lần trong trò chơi, vào ban đêm, Hiệp Sĩ có thể chọn một người chơi để được bảo vệ. Miễn là Hiệp Sĩ còn sống, người chơi này sẽ bất tử vào tất cả các đêm. Chỉ bị loại bởi các lí do vào ban ngày. ( như bị treo cổ). Hiệp Sí sẽ tự treo cổ nếu vai trò Công Chúa bị giết. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'blang', name:'🐆 Kẻ Phá Rối', hint:'Mỗi đêm, Quản trò sẽ hỏi “Kẻ Phá Rối có muốn quậy phá không?”. Nếu đồng ý, Kẻ Phá Rối sẽ tỉnh dậy và ra hiệu bằng cách gật đầu. Ngày hôm sau, sẽ có 2 lượt biểu quyết treo cổ. Kẻ Phá Rối chỉ thực hiện được 1 lần quậy phá trong suốt cả ván chơi. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'nsi', name:'🐆 Nghệ Sĩ Vĩ Cầm', hint:'Hai lần trong một trò chơi, vào ban đêm, Nghệ Sĩ Vĩ Cầm sẽ chọn 1 người chơi để biết người đó có khóc thương tiếc cho cái chết của người chết đầu tiên không. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'nldo', name:'🐆 Người Lái Đò', hint:'Hai lần trong trò chơi, vào ban đêm, Người Lái Đò sẽ chọn ra 2 người chơi để đưa lên đò, nếu 1 trong 2 người chết thì vẫn sẽ được sống hết ngày hôm sau. Nếu cả 2 người trên đò đều chết, họ vẫn sẽ được sống hết ngày hôm sau nhưng bạn sẽ chết vào chính đêm đó. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'hbcon', name:'🐆 Hoa Bé Con', hint:'Một lần trong trò chơi, bạn sẽ có thể cứu 1 người khỏi bị treo cổ bằng cách biểu quyết - Cứu người đó. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'ngdem', name:'🐆 Người Gác Đêm', hint:'Người Gác Đêm có 2 lần bảo vệ, vào ban đêm, Người Gác Đêm có thể biết những ai đã được bảo vệ, khi 2 lần bảo vệ của Người Gác Đêm sử dụng hết thì sẽ không còn biết những ai đã được bảo vệ nữa. Trường hợp không có ai được bảo vệ, Người Gác Đêm bắt buộc phải sử dụng lần bảo vệ của mình. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'mnu', name:'🐆 Ma Nữ', hint:'Mỗi đêm, Ma Nữ có thể ghé thăm 1 người chơi, nếu Ma Nữ bị tấn công trong lúc ghé thăm người khác, Ma Nữ sẽ không chết. Nhưng nếu người được ghé thăm bị tấn công, Ma Nữ sẽ chặn lượt tấn công đó và linh hồn của Ma Nữ và người chơi được ghé thăm sẽ liên kết với nhau. 1 trong 2 chết, người kia cũng sẽ chết theo. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'txa', name:'🐆 Thiện Xạ', hint:'Thiện Xạ có 2 mũi tên, vào mỗi đêm, Thiện Xạ có thể lựa chọn chọn mục tiêu hoặc bắn, mục tiêu khi được chọn có thể thay đổi nhưng chọn mục tiêu và bắn phải cách nhau 1 đêm. Nếu chọn trúng Dân Làng, mũi tên sẽ quay ngược lại giết chết Xạ Thủ. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'tphan', name:'🐆 Thẩm Phán', hint:'Hai lần trong trò chơi, vào buổi sáng, nếu cuộc bỏ phiếu không thể chọn ra người bị treo cổ, Thẩm Phản sẽ được chọn 1 người để kết tội và treo cổ. Nếu đó là Dân Làng, Thẩm Phản cũng sẽ chết theo. Lần kết tội đầu tiên sẽ làm lộ danh tính của Thẩm Phán. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'nptich', name:'🐆 Nhà Phân Tích', hint:'Mỗi đêm, Nhà Phân Tích chọn ra 2 người chơi để kiểm tra hào quang của họ, nếu ra cùng kết quả, Nhà Phân Tích sẽ bị vỡ kính và không thể kiểm tra hào quang vào đêm hôm sau. Nếu bị vỡ kính 2 lần, Nhà Phân Tích sẽ mất đi chức năng của mình. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'nncam', name:'🐆 Nhà Ngoại Cảm', hint:'Mỗi đêm, Nhà Ngoại Cảm sẽ chọn ra 2 người chơi, nếu 1 trong 2 hoặc cả 2 đều giết người trong đêm trước, Quản Trò sẽ cho Nhà Ngoại Cảm màu đỏ, ngược lại Quản Trò sẽ cho màu xanh. Đêm đầu tiên, kết quả luôn là màu xanh. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'cbac', name:'🐆 Con Bạc', hint:'Mỗi đêm, Con Bạc có thể kiểm tra 1 người để xem người đó có thuộc Dân Làng/Ma Sói/Đổi Phe/Phe Thứ 3 không. Phe Thứ 3 bao gồm cả vai trò giết người và bỏ phiếu. Con Bạc chỉ có 2 lần kiểm tra có thuộc Dân Làng hay không. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'py', name:'🐆 Pháp Y', hint:'2 lần trong trò chơi, vào ban đêm, Pháp Y có thể chọn ra 1 người đã chết, sau đó chọn liên tiếp 3 nghi phạm, nếu trong 3 nghi phạm có ít nhất 1 người liên quan đến cái chết của người được chọn, Quản Trò sẽ ra hiệu cho Pháp Y. Nếu người chết bị giết bởi phe Thứ 3, Quản Trò sẽ cho Pháp Y chọn 4 nghi phạm. Mỗi lần sử dụng chức năng sẽ cách nhau 1 đêm. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'nghon', name:'🐆 Người Gọi Hồn', hint:'Hai lần trong trò chơi, kể từ đêm thứ hai, Quản Trò sẽ hỏi Người Gọi Hồn có muốn sử dụng chức năng hay không. Nếu đồng ý, Quản Trò sẽ cho Người Gọi Hồn được sử dụng chức năng của Dân Làng đã chết sớm hơn đến hết buổi sáng hôm sau. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'tlbanh', name:'🐆 Thợ Làm Bánh', hint:'Mỗi đêm, Thợ Làm Bánh sẽ phát bánh cho 1 người chơi, và phiếu bầu của người đó vào hôm sau sẽ được x2. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'tren', name:'🐆 Thợ Rèn', hint:'Thợ Rèn có thể rèn ra 2 loại vũ khí gồm: 2 tấm khiên và 1 thanh kiếm, thời gian rèn 1 vũ khí là 1 ngày (tức đến đêm hôm sau, khi chọn rèn), 2 loại vũ khí này đều phải trao đi cho người khác trước khi rèn vũ khí khác. Thợ Rèn không thể giữ vũ khí cho riêng mình. Người được nhẫn vũ khí sẽ sử dụng chúng vào ban đêm lượt của họ. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
-{ key:'bsi', name:'🐆 Bác Sĩ', hint:'Mỗi đêm, bạn có thể chọn ra một người để che chở (không liên tiếp 2 đêm), người đó sẽ được an toàn vào đêm đó (nhưng không thoát khỏi Phù Thủy), Bác Sĩ không tự che chở cho bản thân mình được. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'prince', name:'👨🏻‍🌾 Công Chúa', hint:'Công Chúa không thể bị treo cổ chết. Vào lần bị vote chết và chuẩn bị treo cổ, người này sẽ lật lá bài lên để mọi người được thấy và không phải chịu treo cổ. Tất cả người chơi lập tức đi ngủ. Lá bài này đi kèm với Hiệp Sĩ. Điều kiện thắng: Thắng cùng phe Dân Làng. ', color:'#3b82f6' },
+{ key:'elder', name:'👨🏻‍🌾 Già Làng', hint:'Già Làng có 2 mạng sống. Nếu chết cả 2 lần thì các quyền năng (Tiên tri, Bảo vệ,…) của nhân vật khác sẽ mất đi trong đêm tiếp theo. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'tough guy', name:'👨🏻‍🌾 Lực Sĩ', hint:'Nếu bị Ma Sói cắn, Lực Sĩ sẽ được Quản Trò khều dậy riêng để cho biết con sói cắn mình và Lực Sĩ sẽ chết vào đêm tiếp theo chứ không phải ngay tại đêm đó. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'mayor', name:'👨🏻‍🌾 Thị Trưởng', hint:'Phiếu biểu quyết của Thị Trưởng được tính là 2 phiếu khi biểu quyết treo cổ. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'hbi', name:'👨🏻‍🌾 Tiên Tri', hint:'Mỗi đêm, Tiên Tri sẽ tỉnh dậy và chỉ định một người. Quản Trò sẽ cho Tiên Tri biết chính xác người chơi này là chức năng gì. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'dbom', name:'👨🏻‍🌾 Kẻ Đánh Bom', hint:'Nếu Kẻ Đánh Bom  bị loại, thì hai người chơi bên trái và phải của người chơi này sẽ cùng bị loại (không tính những người chơi đã bị loại rồi). Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'tvan', name:'👨🏻‍🌾 Nhà Thiên Văn Học', hint:'Mỗi đêm, Nhà Thiên Văn Học sẽ tỉnh dậy và có thể chỉ vào một người chơi để gọi mưa sao băng. Nếu người chơi đó là Ma Sói, người đó sẽ bị loại. Nếu không, Nhà Thiên Văn Học sẽ bị loại. Ngoài ra, nếu trong ván có Sói Điên Cuồng hoặc Sói Độc Tố, Nhà Thiên Văn Học có 1 lần gọi trăng khuyết để vô hiệu mọi chức năng của phe Ma Sói. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'lgac', name:'👨🏻‍🌾 Người Canh Gác', hint:'Một lần trong trò chơi, kể từ đêm thứ hai, Người Canh Gác có thể chỉ định giết một người chơi nếu nghi ngờ. Ngoài ra, Người Canh Gác còn có 1 lần kiểm tra vai trò thật của 1 người chơi vào ban đêm. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'gsu',  name:'👨🏻‍🌾 Thám Tử', hint:'Mỗi Đêm, Thám Tử tỉnh dậy và chỉ định hai người chơi. Quản Trò sẽ cho biết hai người chơi này có cùng phe với nhau hay không. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'tsu', name:'👨🏻‍🌾 Tiên Tri Tập Sự', hint:'Nếu vai trò thông tin thuộc phe dân chết, Tiên Tri Tập Sự sẽ trở thành vai trò thông tin đó mới. Tiên tri Tập sự được thông báo trong đêm, vào lượt gọi của vai trò thông tin đó, Quản trò đụng vào vai của Tiên Tri Tập Sự để gọi dậy. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'hquang', name:'👨🏻‍🌾 Tiên Tri Hào Quang', hint:'Tiên Tri Hào Quang thức dậy mỗi đêm để kiểm tra người chơi có chức năng hay không (Chức năng: Có/0). Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'nbenh', name:'👨🏻‍🌾 Người Bệnh', hint:'Nếu Người Bệnh bị Ma Sói cắn, thì Ma Sói sẽ không thể cắn người nào vào đêm tiếp theo do bị bệnh. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'cma', name:'👨🏻‍🌾 Con Ma', hint:'Con Ma bị chết ngay vào đêm đầu tiên. Mỗi đêm( bao gồm cả đêm đầu tiên), Con ma có thể liên hệ với những người chơi khác bằng cách viết 1 chữ lên 1 tờ giấy nhưng không được viết tên hay viết tắt tên, mà thay vào đó là đưa ra các gợi ý thú vị. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'hbinh', name:'👨🏻‍🌾 Người Yêu Hòa Bình', hint:'Một lần trong trò chơi, vào ban đêm, Người Yêu Hòa Bình có thể chặn cuộc bỏ phiếu vào ngày hôm sau. Quản Trò sẽ thông báo "Người Yêu Hòa Bình đã chặn cuộc bỏ phiếu vào hôm nay.". Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'ttu', name:'👨🏻‍🌾 Cảnh Sát Trưởng', hint:'Một lần trong trò chơi, vào ban đêm, Cảnh Sát Trưởng sẽ được gọi dậy và được phép chọn 1 một người. Quản Trò sẽ cho Cảnh Sát Trưởng biết người đó hoặc hai người bên cạnh người đó có phải là Ma Sói hay không. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'hsi', name:'👨🏻‍🌾 Hiệp Sĩ', hint:'Một lần trong trò chơi, vào ban đêm, Hiệp Sĩ có thể chọn một người chơi để được bảo vệ. Miễn là Hiệp Sĩ còn sống, người chơi này sẽ bất tử vào tất cả các đêm. Chỉ bị loại bởi các lí do vào ban ngày. ( như bị treo cổ). Hiệp Sí sẽ tự treo cổ nếu vai trò Công Chúa bị giết. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'blang', name:'👨🏻‍🌾 Kẻ Phá Rối', hint:'Mỗi đêm, Quản trò sẽ hỏi “Kẻ Phá Rối có muốn quậy phá không?”. Nếu đồng ý, Kẻ Phá Rối sẽ tỉnh dậy và ra hiệu bằng cách gật đầu. Ngày hôm sau, sẽ có 2 lượt biểu quyết treo cổ. Kẻ Phá Rối chỉ thực hiện được 1 lần quậy phá trong suốt cả ván chơi. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'nsi', name:'👨🏻‍🌾 Nghệ Sĩ Vĩ Cầm', hint:'Hai lần trong một trò chơi, vào ban đêm, Nghệ Sĩ Vĩ Cầm sẽ chọn 1 người chơi để biết người đó có khóc thương tiếc cho cái chết của người chết đầu tiên không. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'nldo', name:'👨🏻‍🌾 Người Lái Đò', hint:'Hai lần trong trò chơi, vào ban đêm, Người Lái Đò sẽ chọn ra 2 người chơi để đưa lên đò, nếu 1 trong 2 người chết thì vẫn sẽ được sống hết ngày hôm sau. Nếu cả 2 người trên đò đều chết, họ vẫn sẽ được sống hết ngày hôm sau nhưng bạn sẽ chết vào chính đêm đó. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'hbcon', name:'👨🏻‍🌾 Hoa Bé Con', hint:'Một lần trong trò chơi, bạn sẽ có thể cứu 1 người khỏi bị treo cổ bằng cách biểu quyết - Cứu người đó. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'ngdem', name:'👨🏻‍🌾 Người Gác Đêm', hint:'Người Gác Đêm có 2 lần bảo vệ, vào ban đêm, Người Gác Đêm có thể biết những ai đã được bảo vệ, khi 2 lần bảo vệ của Người Gác Đêm sử dụng hết thì sẽ không còn biết những ai đã được bảo vệ nữa. Trường hợp không có ai được bảo vệ, Người Gác Đêm bắt buộc phải sử dụng lần bảo vệ của mình. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'mnu', name:'👨🏻‍🌾 Ma Nữ', hint:'Mỗi đêm, Ma Nữ có thể ghé thăm 1 người chơi, nếu Ma Nữ bị tấn công trong lúc ghé thăm người khác, Ma Nữ sẽ không chết. Nhưng nếu người được ghé thăm bị tấn công, Ma Nữ sẽ chặn lượt tấn công đó và linh hồn của Ma Nữ và người chơi được ghé thăm sẽ liên kết với nhau. 1 trong 2 chết, người kia cũng sẽ chết theo. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'txa', name:'👨🏻‍🌾 Thiện Xạ', hint:'Thiện Xạ có 2 mũi tên, vào mỗi đêm, Thiện Xạ có thể lựa chọn chọn mục tiêu hoặc bắn, mục tiêu khi được chọn có thể thay đổi nhưng chọn mục tiêu và bắn phải cách nhau 1 đêm. Nếu chọn trúng Dân Làng, mũi tên sẽ quay ngược lại giết chết Xạ Thủ. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'tphan', name:'👨🏻‍🌾 Thẩm Phán', hint:'Hai lần trong trò chơi, vào buổi sáng, nếu cuộc bỏ phiếu không thể chọn ra người bị treo cổ, Thẩm Phản sẽ được chọn 1 người để kết tội và treo cổ. Nếu đó là Dân Làng, Thẩm Phản cũng sẽ chết theo. Lần kết tội đầu tiên sẽ làm lộ danh tính của Thẩm Phán. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'nptich', name:'👨🏻‍🌾 Nhà Phân Tích', hint:'Mỗi đêm, Nhà Phân Tích chọn ra 2 người chơi để kiểm tra hào quang của họ, nếu ra cùng kết quả, Nhà Phân Tích sẽ bị vỡ kính và không thể kiểm tra hào quang vào đêm hôm sau. Nếu bị vỡ kính 2 lần, Nhà Phân Tích sẽ mất đi chức năng của mình. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'nncam', name:'👨🏻‍🌾 Nhà Ngoại Cảm', hint:'Mỗi đêm, Nhà Ngoại Cảm sẽ chọn ra 2 người chơi, nếu 1 trong 2 hoặc cả 2 đều giết người trong đêm trước, Quản Trò sẽ cho Nhà Ngoại Cảm màu đỏ, ngược lại Quản Trò sẽ cho màu xanh. Đêm đầu tiên, kết quả luôn là màu xanh. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'cbac', name:'👨🏻‍🌾 Con Bạc', hint:'Mỗi đêm, Con Bạc có thể kiểm tra 1 người để xem người đó có thuộc Dân Làng/Ma Sói/Đổi Phe/Phe Thứ 3 không. Phe Thứ 3 bao gồm cả vai trò giết người và bỏ phiếu. Con Bạc chỉ có 2 lần kiểm tra có thuộc Dân Làng hay không. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'py', name:'👨🏻‍🌾 Pháp Y', hint:'2 lần trong trò chơi, vào ban đêm, Pháp Y có thể chọn ra 1 người đã chết, sau đó chọn liên tiếp 3 nghi phạm, nếu trong 3 nghi phạm có ít nhất 1 người liên quan đến cái chết của người được chọn, Quản Trò sẽ ra hiệu cho Pháp Y. Nếu người chết bị giết bởi phe Thứ 3, Quản Trò sẽ cho Pháp Y chọn 4 nghi phạm. Mỗi lần sử dụng chức năng sẽ cách nhau 1 đêm. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'nghon', name:'👨🏻‍🌾 Người Gọi Hồn', hint:'Hai lần trong trò chơi, kể từ đêm thứ hai, Quản Trò sẽ hỏi Người Gọi Hồn có muốn sử dụng chức năng hay không. Nếu đồng ý, Quản Trò sẽ cho Người Gọi Hồn được sử dụng chức năng của Dân Làng đã chết sớm hơn đến hết buổi sáng hôm sau. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'tlbanh', name:'👨🏻‍🌾 Thợ Làm Bánh', hint:'Mỗi đêm, Thợ Làm Bánh sẽ phát bánh cho 1 người chơi, và phiếu bầu của người đó vào hôm sau sẽ được x2. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'tren', name:'👨🏻‍🌾 Thợ Rèn', hint:'Thợ Rèn có thể rèn ra 2 loại vũ khí gồm: 2 tấm khiên và 1 thanh kiếm, thời gian rèn 1 vũ khí là 1 ngày (tức đến đêm hôm sau, khi chọn rèn), 2 loại vũ khí này đều phải trao đi cho người khác trước khi rèn vũ khí khác. Thợ Rèn không thể giữ vũ khí cho riêng mình. Người được nhẫn vũ khí sẽ sử dụng chúng vào ban đêm lượt của họ. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
+{ key:'bsi', name:'👨🏻‍🌾 Bác Sĩ', hint:'Mỗi đêm, bạn có thể chọn ra một người để che chở (không liên tiếp 2 đêm), người đó sẽ được an toàn vào đêm đó (nhưng không thoát khỏi Phù Thủy), Bác Sĩ không tự che chở cho bản thân mình được. Điều kiện thắng: Thắng cùng phe Dân Làng.', color:'#3b82f6' },
 // PHE ĐỔI PHE
-{ key:'cupid', name:'💘 Thần Tình Yêu', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi để ghép đôi( được phép chọn cả mình). Hai người được chọn sẽ thức dậy, nhận diện và trao đổi vai trò cho nhau nhưng không biết ai là người ghép đôi( trừ khi chính Thần Tinh Yêu chọn bản thân là người được ghép đôi). Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo. Nếu ghép trúng 2 phe trái nhau thì 2 người chơi sẽ trở thành phe thứ 3 hoàn toàn mới và dành chiến thắng khi họ là người cuối cùng còn sống sót. Điều kiện thắng: Thắng cùng phe Dân Làng hoặc thắng theo phe couple.', color:'#10b981' },
-{ key:'doppelganger', name:'👥 Nhân Bản', hint:'Vào đêm đầu tiên, Nhân Bản tỉnh dậy và lựa chọn một người chơi. Nếu người chơi kia chết, Nhân Bản sẽ bí mật lấy chức năng của người đó. Trước khi có chức năng mới, Nhân Bản theo phe dân. Sau khi có chức năng mới, Nhân Bản theo phe của chức năng này. Điều kiện thắng: Thắng cùng phe Dân Làng hoặc thắng cùng phe đã nhân bản.', color:'#10b981' },
-{ key:'cursed', name:'🌑 Bán Sói', hint:'Bán Sói ban đầu là người, Tiên Tri soi cũng ra người. Nếu Bán Sói bị Ma Sói cắn thì sẽ không chết, mà từ đêm tiếp theo sẽ biến thành Ma Sói, đồng thời nếu Tiên Tri sói thì cũng sẽ là Sói. Điều kiện thắng: Thắng cùng phe Dân Làng hoặc thắng cùng phe Ma Sói.', color:'#10b981' },
+{ key:'cupid', name:'👨🏻‍🌾 Thần Tình Yêu', hint:'Thức dậy vào đêm đầu tiên và chọn ra 2 người chơi để ghép đôi( được phép chọn cả mình). Hai người được chọn sẽ thức dậy, nhận diện và trao đổi vai trò cho nhau nhưng không biết ai là người ghép đôi( trừ khi chính Thần Tinh Yêu chọn bản thân là người được ghép đôi). Nếu một trong hai người này chết, người còn lại cũng sẽ chết theo. Nếu ghép trúng 2 phe trái nhau thì 2 người chơi sẽ trở thành phe thứ 3 hoàn toàn mới và dành chiến thắng khi họ là người cuối cùng còn sống sót. Điều kiện thắng: Thắng cùng phe Dân Làng hoặc thắng theo phe couple.', color:'#10b981' },
+{ key:'doppelganger', name:'👨🏻‍🌾 Nhân Bản', hint:'Vào đêm đầu tiên, Nhân Bản tỉnh dậy và lựa chọn một người chơi. Nếu người chơi kia chết, Nhân Bản sẽ bí mật lấy chức năng của người đó. Trước khi có chức năng mới, Nhân Bản theo phe dân. Sau khi có chức năng mới, Nhân Bản theo phe của chức năng này. Điều kiện thắng: Thắng cùng phe Dân Làng hoặc thắng cùng phe đã nhân bản.', color:'#10b981' },
+{ key:'cursed', name:'👨🏻‍🌾 Bán Sói', hint:'Bán Sói ban đầu là người, Tiên Tri soi cũng ra người. Nếu Bán Sói bị Ma Sói cắn thì sẽ không chết, mà từ đêm tiếp theo sẽ biến thành Ma Sói, đồng thời nếu Tiên Tri sói thì cũng sẽ là Sói. Điều kiện thắng: Thắng cùng phe Dân Làng hoặc thắng cùng phe Ma Sói.', color:'#10b981' },
 // PHE THỨ 3
-{ key:'tanner', name:'😓 Thằng Ngố', hint:'Thằng Ngố chỉ thắng khi anh ta bị treo cổ vào ban ngày. Các điều kiện thắng khác cũng được áp dụng. Chức năng này đi chung với lá bài Yêu hòa bình.', color:'#eab308' },
-{ key:'gchu', name:'🦹 Giáo Chủ', hint:'Mỗi đêm, Giáo chủ sẽ phải tỉnh dậy và thêm 1 người chơi vào giáo phái của mình. Nếu tất cả những người còn sống đều là người của giáo phái mình, Giáo chủ sẽ là người chiến thắng. Các điều kiện thắng khác cũng được áp dụng.', color:'#eab308' },
-{ key:'dgau', name:'🐻 Du Côn', hint:' Vào đêm đầu tiên Du Côn có thể chọn 3 người để dụ dỗ gia nhập cùng mình, nếu đồng ý gia nhập, những người được dụ dỗ sẽ được khều dậy, vứt bỏ chức năng cũ và trở thành các Du Côn. Nếu chỉ còn 1 Du Côn, Du Côn sẽ được giết 1 người mỗi đêm. Du Côn chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
-{ key:'mcr', name:'🧛 Ma Cà Rồng', hint:'Là 1 thế lực mạnh thứ 3 ngoài phe Ma Sói và phe Dân Làng. Mỗi đêm, Ma Cà Rồng sẽ chọn 1 người chơi là nạn nhân. Nếu nạn nhân của Ma Cà Rồng bị từ 2 người chơi trở lên (không tính Ma Cà Rồng) nghi ngơ  trong cuộc thảo luận ở buổi sáng thì nạn nhân sẽ chết khi đến giờ biểu quyết. Ma Cà Rồng không thể bị giết bởi Ma Sói vào ban đêm (trừ lượt tấn công của Sói Trắng).', color:'#eab308' },
-{ key:'strang', name:'🐺 Sói Trắng', hint:'Sói Trắng thức dậy cùng Bầy Sói và tham gia cùng Bầy Sói để giết Dân Làng. Sau đó, Sói Trắng sẽ thức dậy thêm một lần nữa để tiếp tục chọn mục tiêu để giết. Sói Trắng dành chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
-{ key:'ttama', name:'🐺 Thám Tử Ác Ma', hint:'Mỗi đêm, Thám Tử Ác Ma có thể lựa chọn hai người chơi, bao gồm bản thân. Nếu hai người chơi đó ở hai phe khác nhau, cả hai bọn họ sẽ chết, còn không thì phe của họ sẽ bị tiết lộ với Thám Tử Ác Ma. Nếu lựa chọn bản thân thì chỉ người còn lại sẽ chết.', color:'#eab308' },
-{ key:'snhloat', name:'🐺 Sát Nhân', hint:'Mỗi đêm, Sát Nhân thức dậy và giết 1 người. Sát Nhân không thể bị giết bởi Ma Sói vào ban đêm (trừ lượt tấn công của Sói Trắng). Sát Nhân chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
-{ key:'tsnguoi', name:'🐺 Thợ Săn Người', hint:'Vào đêm đầu tiên, Thợ Săn Người sẽ thức dậy để Quản Trò cho biết mục tiêu săn lùng. Thợ Săn Người chiến thắng khi mục tiêu săn lùng bị treo cổ vào buổi sáng. Nếu mục tiêu săn lùng chết vì lí do khác, Thợ Săn Người sẽ gia nhập vào Dân Làng và chiến thắng với Dân Làng.', color:'#eab308' },
-{ key:'kphoa', name:'🐺 Kẻ Phóng Hỏa', hint:'Mỗi đêm, Kẻ Phóng Hỏa sẽ chọn 2 người gần nhau để tẩm xăng hoặc đốt những người đã tẩm xăng, nếu 2 đêm liên tiếp Kẻ Phóng Hóa đều chọn tẩm xăng thì 4 người bị tẩm xăng bắt buộc phải là 4 người ngồi liền kề nhau. Tẩm xăng có thể bị chặn bởi các lượt bảo vệ. Kẻ Phóng Hỏa thắng khi còn lại cuối cùng.', color:'#eab308' },
-{ key:'ttac', name:'🐺 Tin Tặc', hint:'Mỗi đêm, Tin Tặc sẽ chọn 1 người chơi. Người chơi đó sẽ không được nói chuyện hay tham gia vào biểu quyết. Đến giờ vote treo cổ, người chơi đó sẽ chết. Tin Tặc không thể bị giết bởi Ma Sói vào ban đêm (trừ lượt tấn công của Sói Trắng). Tin Tặc chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
-{ key:'ngkim', name:'🐺 Nhà Giả Kim', hint:'Mỗi đêm, Nhà Giả Kim sẽ đưa 2 bình thuốc cho 2 người chơi khác nhau, 1 bình đỏ và 1 bình đen. Người được đưa bình thuốc đen sẽ chết vào cuộc bỏ phiếu sáng hôm sau, còn người nhận bình đỏ phải nhận đến bình đỏ thứ 2 mới chết vào cuộc bỏ phiếu sáng hôm sau. Các lượt bảo vệ có thể ngăn chặn bình thuốc đen nhưng không thể ngăn chặn bình thuốc đỏ (trừ lượt bảo vệ của Hiệp Sĩ). Nhà Giả Kim chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
-{ key:'mnngu', name:'🐺 Nhân Ngư', hint:'Mỗi đêm, Nhân Ngư có thể chọn ra 3 người để mê hoặc, hoặc có thể giết tối đa 2 người đã mê hoặc. Nếu Nhân Ngư chết thì những người bị mê hoặc cũng sẽ chết theo. Việc mê hoặc vượt qua mọi lượt bảo vệ (trừ Hiệp sĩ và lượt bảo vệ của Hiệp Sĩ). Nhân Ngư chiến thắng khi đã mê hoặc toàn bộ người chơi hoặc còn lại cuối cùng.', color:'#eab308' },
+{ key:'tanner', name:'👨🏻‍🌾 Thằng Ngố', hint:'Thằng Ngố chỉ thắng khi anh ta bị treo cổ vào ban ngày. Các điều kiện thắng khác cũng được áp dụng. Chức năng này đi chung với lá bài Yêu hòa bình.', color:'#eab308' },
+{ key:'tsnguoi', name:'👨🏻‍🌾 Thợ Săn Người', hint:'Vào đêm đầu tiên, Thợ Săn Người sẽ thức dậy để Quản Trò cho biết mục tiêu săn lùng. Thợ Săn Người chiến thắng khi mục tiêu săn lùng bị treo cổ vào buổi sáng. Nếu mục tiêu săn lùng chết vì lí do khác, Thợ Săn Người sẽ gia nhập vào Dân Làng và chiến thắng với Dân Làng.', color:'#eab308' },
+{ key:'gchu', name:'🔪 Giáo Chủ', hint:'Mỗi đêm, Giáo chủ sẽ phải tỉnh dậy và thêm 1 người chơi vào giáo phái của mình. Nếu tất cả những người còn sống đều là người của giáo phái mình, Giáo chủ sẽ là người chiến thắng. Các điều kiện thắng khác cũng được áp dụng.', color:'#eab308' },
+{ key:'dgau', name:'🔪 Du Côn', hint:' Vào đêm đầu tiên Du Côn có thể chọn 3 người để dụ dỗ gia nhập cùng mình, nếu đồng ý gia nhập, những người được dụ dỗ sẽ được khều dậy, vứt bỏ chức năng cũ và trở thành các Du Côn. Nếu chỉ còn 1 Du Côn, Du Côn sẽ được giết 1 người mỗi đêm. Du Côn chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
+{ key:'mcr', name:'🔪 Ma Cà Rồng', hint:'Là 1 thế lực mạnh thứ 3 ngoài phe Ma Sói và phe Dân Làng. Mỗi đêm, Ma Cà Rồng sẽ chọn 1 người chơi là nạn nhân. Nếu nạn nhân của Ma Cà Rồng bị từ 2 người chơi trở lên (không tính Ma Cà Rồng) nghi ngơ  trong cuộc thảo luận ở buổi sáng thì nạn nhân sẽ chết khi đến giờ biểu quyết. Ma Cà Rồng không thể bị giết bởi Ma Sói vào ban đêm (trừ lượt tấn công của Sói Trắng).', color:'#eab308' },
+{ key:'strang', name:'🔪 Sói Trắng', hint:'Sói Trắng thức dậy cùng Bầy Sói và tham gia cùng Bầy Sói để giết Dân Làng. Sau đó, Sói Trắng sẽ thức dậy thêm một lần nữa để tiếp tục chọn mục tiêu để giết. Sói Trắng dành chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
+{ key:'ttama', name:'🔪 Thám Tử Ác Ma', hint:'Mỗi đêm, Thám Tử Ác Ma có thể lựa chọn hai người chơi, bao gồm bản thân. Nếu hai người chơi đó ở hai phe khác nhau, cả hai bọn họ sẽ chết, còn không thì phe của họ sẽ bị tiết lộ với Thám Tử Ác Ma. Nếu lựa chọn bản thân thì chỉ người còn lại sẽ chết.', color:'#eab308' },
+{ key:'snhloat', name:'🔪 Sát Nhân', hint:'Mỗi đêm, Sát Nhân thức dậy và giết 1 người. Sát Nhân không thể bị giết bởi Ma Sói vào ban đêm (trừ lượt tấn công của Sói Trắng). Sát Nhân chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
+{ key:'kphoa', name:'🔪 Kẻ Phóng Hỏa', hint:'Mỗi đêm, Kẻ Phóng Hỏa sẽ chọn 2 người gần nhau để tẩm xăng hoặc đốt những người đã tẩm xăng, nếu 2 đêm liên tiếp Kẻ Phóng Hóa đều chọn tẩm xăng thì 4 người bị tẩm xăng bắt buộc phải là 4 người ngồi liền kề nhau. Tẩm xăng có thể bị chặn bởi các lượt bảo vệ. Kẻ Phóng Hỏa thắng khi còn lại cuối cùng.', color:'#eab308' },
+{ key:'ttac', name:'🔪 Tin Tặc', hint:'Mỗi đêm, Tin Tặc sẽ chọn 1 người chơi. Người chơi đó sẽ không được nói chuyện hay tham gia vào biểu quyết. Đến giờ vote treo cổ, người chơi đó sẽ chết. Tin Tặc không thể bị giết bởi Ma Sói vào ban đêm (trừ lượt tấn công của Sói Trắng). Tin Tặc chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
+{ key:'ngkim', name:'🔪 Nhà Giả Kim', hint:'Mỗi đêm, Nhà Giả Kim sẽ đưa 2 bình thuốc cho 2 người chơi khác nhau, 1 bình đỏ và 1 bình đen. Người được đưa bình thuốc đen sẽ chết vào cuộc bỏ phiếu sáng hôm sau, còn người nhận bình đỏ phải nhận đến bình đỏ thứ 2 mới chết vào cuộc bỏ phiếu sáng hôm sau. Các lượt bảo vệ có thể ngăn chặn bình thuốc đen nhưng không thể ngăn chặn bình thuốc đỏ (trừ lượt bảo vệ của Hiệp Sĩ). Nhà Giả Kim chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
+{ key:'mnngu', name:'🔪 Nhân Ngư', hint:'Mỗi đêm, Nhân Ngư có thể chọn ra 3 người để mê hoặc, hoặc có thể giết tối đa 2 người đã mê hoặc. Nếu Nhân Ngư chết thì những người bị mê hoặc cũng sẽ chết theo. Việc mê hoặc vượt qua mọi lượt bảo vệ (trừ Hiệp sĩ và lượt bảo vệ của Hiệp Sĩ). Nhân Ngư chiến thắng khi đã mê hoặc toàn bộ người chơi hoặc còn lại cuối cùng.', color:'#eab308' },
   ];
 
 // Chuẩn hoá dữ liệu customRoles: cho phép dạng {name:{count,faction}}
@@ -2331,42 +2360,44 @@ const ROLE_META = {
   werewolf:{aura:1, func:1},
   werecub:{aura:1, func:0},
   minion:{aura:0, func:1},
-  pssoi:{aura:0, func:0},      // ☄️ Sói phù thủy
-  soidc:{aura:1, func:0},      // ☠️ Sói đầi đàn
-  soituyet:{aura:1, func:0},   // ❄️ Sói tuyết
-  alpha:{aura:1, func:0},      // 🐱 Sói mèo con
-  acmong:{aura:1, func:0},     // 🎃 Ác mộng
-  scuong:{aura:1, func:0},     // 💢 Sói cuồng
+  pssoi:{aura:0, func:0},      
+  soidc:{aura:1, func:0},      
+  soituyet:{aura:1, func:0},   
+  alpha:{aura:1, func:0},      
+  acmong:{aura:1, func:0},     
+  scuong:{aura:1, func:0},     
   shbinh:{aura:1, func:0},
   sdto:{aura:1, func:0},
   shve:{aura:1, func:0},
   spsu:{aura:1, func:0},
   sptach:{aura:1, func:0},
+  stthuat:{aura:1, func:0},
+  sttri:{aura:1, func:0},
   
   // Dân làng & phe dân
-  seer:{aura:0, func:0},           // 🔮 Thầy bói
-  witch:{aura:0, func:0},          // 🧙‍♂️ Phù thủy
-  hunter:{aura:0, func:0},         // 🏹 Thợ săn
-  guard:{aura:0, func:0},          // 🛡️ Bảo vệ
-  spellcaster:{aura:0, func:0},    // 🔇 Bà già khó tính
-  prince:{aura:0, func:1},         // 👑 Công chúa
-  elder:{aura:0, func:1},          // 👴 Già làng
-  "tough guy":{aura:0, func:1},    // 💪 Lực sĩ  
-  mayor:{aura:0, func:1},          // ⭐ Thị trưởng
-  hbi:{aura:0, func:0},            // ✨ Tiên tri
-  dbom:{aura:0, func:1},           // 💣️ Kẻ đánh bom
-  tvan:{aura:0, func:0},           // 🔭 Thiên văn
-  lgac:{aura:0, func:0},           // ⚔️ Lính gác
-  gsu:{aura:0, func:0},            // 👨‍🏫 Giáo sư
-  tsu:{aura:0, func:1},            // 🔮 Tập sự
-  hquang:{aura:0, func:0},         // 🧿 Hào quang
-  nbenh:{aura:0, func:1},          // 🤒 Người bệnh
-  cma:{aura:0, func:1},            // 👻 Con ma
-  hbinh:{aura:0, func:0},          // 🤝 Hòa bình
-  ttu:{aura:0, func:0},            // 🕵‍♂ Thám tử
-  hsi:{aura:0, func:0},            // 💂‍♂ Hiệp sĩ
-  blang:{aura:0, func:0},          // 🐆 Báo làng
-  village:{aura:0, func:1},        // 👨🏻‍🌾 Dân làng (không chức năng)
+  seer:{aura:0, func:0},           
+  witch:{aura:0, func:0},          
+  hunter:{aura:0, func:0},         
+  guard:{aura:0, func:0},          
+  spellcaster:{aura:0, func:0},    
+  prince:{aura:0, func:1},       
+  elder:{aura:0, func:1},          
+  "tough guy":{aura:0, func:1},     
+  mayor:{aura:0, func:1},     
+  hbi:{aura:0, func:0},           
+  dbom:{aura:0, func:1},           
+  tvan:{aura:0, func:0},           
+  lgac:{aura:0, func:0},           
+  gsu:{aura:0, func:0},           
+  tsu:{aura:0, func:1},            
+  hquang:{aura:0, func:0},         
+  nbenh:{aura:0, func:1},          
+  cma:{aura:0, func:1},            
+  hbinh:{aura:0, func:0},          
+  ttu:{aura:0, func:0},            
+  hsi:{aura:0, func:0},            
+  blang:{aura:0, func:0},          
+  village:{aura:0, func:1},        
   tren:{aura:0, func:0},
   tlbanh:{aura:0, func:0},
   nghon:{aura:0, func:0},
@@ -2384,15 +2415,15 @@ const ROLE_META = {
   bsi:{aura:0, func:0},
 
   // “Đổi phe”
-  cupid:{aura:0, func:0},          // 💘 Cupid
-  doppelganger:{aura:0, func:0},   // 👥 Nhân bản
-  cursed:{aura:0, func:1},         // 🌑 Bị nguyền
+  cupid:{aura:0, func:0},          
+  doppelganger:{aura:0, func:0},   
+  cursed:{aura:0, func:1},         
 
   // Phe thứ 3
-  tanner:{aura:0, func:1},         // 😓 Chán đời
-  gchu:{aura:0, func:0},           // 🦹 Giáo chủ
-  dgau:{aura:1, func:0},           // 🐻 Đầu gấu
-  strang:{aura:1, func:0},         // 🐺 Sói trắng
+  tanner:{aura:0, func:1},         
+  gchu:{aura:0, func:0},          
+  dgau:{aura:1, func:0},           
+  strang:{aura:1, func:0},         
   ttama:{aura:1, func:0},
   tsnguoi:{aura:0, func:1},
   ttac:{aura:1, func:0},
@@ -2400,81 +2431,89 @@ const ROLE_META = {
   kphoa:{aura:1, func:0},
   ngkim:{aura:1, func:0},
   mnngu:{aura:1, func:0},
-  mcr:{aura:1, func:0}             // 🧛 Ma cà rồng
+  mcr:{aura:1, func:0}             
 };
 
 // URL icon tuỳ biến cho 1 số vai (ưu tiên cao hơn emoji)
 const ROLE_ICON_URL = {
-  gchu: 'https://www.wolvesville.com/static/media/icon_sect_leader_filled.d7886d346c5906063136.svg' // 🦹 Giáo chủ
+  gchu: 'https://www.wolvesville.com/static/media/icon_sect_leader_filled.d7886d346c5906063136.svg' 
 };
 Object.assign(ROLE_ICON_URL, {
-  cupid: 'https://www.wolvesville.com/static/media/icon_cupid_filled.5a152d6f57204abcbba8.svg',
-  werewolf: 'https://www.wolvesville.com/static/media/icon_werewolf_filled.ae752e6e4c098343f51f.svg',
-  werecub: 'https://www.wolvesville.com/static/media/icon_junior_werewolf_filled.118d63fe2617f43b4fc7.svg',
-  seer: 'https://www.wolvesville.com/static/media/icon_aura_seer_filled.0dfd01b695fbf2dcf839.svg',
-  witch: 'https://www.wolvesville.com/static/media/icon_witch_filled.baa5bea117d4c6955055.svg',
-  hunter: 'https://www.wolvesville.com/static/media/icon_beast_hunter_filled.8f57b3aafd979562e744.svg',
-  guard: 'https://www.wolvesville.com/static/media/icon_bodyguard_filled.f0e44ef3c82404a0cbcf.svg',
-  spellcaster: 'https://www.wolvesville.com/static/media/icon_grumpy_grandma_filled.4cbc5d802a69f41d39f4.svg',
-  tanner: 'https://www.wolvesville.com/static/media/icon_fool_filled.ab621444cb0413a541c0.svg',
-  village: 'https://www.wolvesville.com/static/media/icon_villager_filled.bf9f7a2cfd5ce009de0f.svg',
-  'tough guy': 'https://www.wolvesville.com/static/media/icon_tough_guy_filled.380bd44d80f0afe555e7.svg',
-  scuong: 'https://www.wolvesville.com/static/media/icon_werewolf_berserk_filled.12ee2ec4c540ab7349c0.svg',
-  soidc: 'https://www.wolvesville.com/static/media/icon_alpha_werewolf_filled.74166752110af0b83bea.svg',
-  doppelganger: 'https://www.wolvesville.com/static/media/icon_grave_robber_filled.412f6ac1536a173e633e.svg',
-  cursed: 'https://www.wolvesville.com/static/media/icon_cursed_human_filled.4175d58fa5f364f6983b.svg',
-  prince: 'https://static.wikia.nocookie.net/werewolf-online/images/f/fb/Ghost_Lady_Fairytale.png/revision/latest?cb=20230521182800',
-  elder: 'https://cdn.wolvesville.com/roleIcons/travel-priest.png',
-  mayor: 'https://www.wolvesville.com/static/media/icon_mayor_filled.93d08f42621aa71d9ece.svg',
-  pssoi: 'https://www.wolvesville.com/static/media/icon_sorcerer_filled.8c8c679df285c6f122b9.svg',
-  soituyet: 'https://www.wolvesville.com/static/media/icon_ghost_wolf_filled.fc3131b2365cdd1f5557.svg',
-  alpha: 'https://www.wolvesville.com/static/media/icon_kitten_wolf_filled.0f568776b7ca8d5d50a1.svg',
-  minion: 'https://www.wolvesville.com/static/media/icon_shapeshifter_filled.047e52d078f13cf809d4.svg',
-  acmong: 'https://www.wolvesville.com/static/media/icon_nightmare_werewolf_filled.eb9ba67a16a2d7afc1ba.svg',
-  hbi: 'https://www.wolvesville.com/static/media/icon_seer_filled.2dbdbb9f7e32df7a0d6e.svg',
-  dbom: 'https://www.wolvesville.com/static/media/icon_bomber_filled.a86d8d7a84e34f47907c.svg',
-  tvan: 'https://www.wolvesville.com/static/media/icon_astronomer_filled.1e78dbcd9db03835ca37.svg',
-  lgac: 'https://www.wolvesville.com/static/media/icon_vigilante_filled.040b4792dabf660c3560.svg',
-  gsu: 'https://www.wolvesville.com/static/media/icon_detective_filled.6f58542f98bb0bad55e9.svg',
-  tsu: 'https://www.wolvesville.com/static/media/icon_seer_apprentice_filled.81480673499f6d53b00c.svg',
-  hquang: 'https://static.wikia.nocookie.net/werewolf-online/images/0/03/Seer_Dark_Love_icon.png/revision/latest?cb=20230703152439',
-  nbenh: 'https://cdn.wolvesville.com/roleIcons/icon_halloween_forger.png',
-  bsi: 'https://www.wolvesville.com/static/media/icon_doctor_filled.20fa62bd956fdf7277aa.svg',
-  cma: 'https://static.wikia.nocookie.net/werewolf-online/images/4/40/Nightmare_Werewolf_Selected.png/revision/latest?cb=20200611170014',
-  hbinh: 'https://www.wolvesville.com/static/media/icon_pacifist_filled.c38071e2243a144974af.svg',
-  ttu: 'https://www.wolvesville.com/static/media/icon_sheriff_filled.3495e4dbfc1660ade952.svg',
-  hsi: 'https://static.wikia.nocookie.net/werewolf-online/images/e/ef/Avenger_Fairy_Tales.png/revision/latest?cb=20230503200804',
-  blang: 'https://www.wolvesville.com/static/media/icon_anarchist_filled.f0729c00f750b8a0e4f2.svg',
-  dgau: 'https://www.wolvesville.com/static/media/icon_bandit_filled.f57904efc4774eeec349.svg',
-  mcr: 'https://static.wikia.nocookie.net/werewolf-online/images/9/9a/Bandit_Halloween_icon.webp/revision/latest?cb=20240101010102&path-prefix=fr',
-  spsu: 'https://www.wolvesville.com/static/media/icon_wolf_shaman_filled.92475ab32fdb1da1dded.svg',
-  shve: 'https://www.wolvesville.com/static/media/icon_guardian_wolf_filled.eae71fbc3fa823f34617.svg',
-  stthuat: 'https://www.wolvesville.com/static/media/icon_voodoo_werewolf_filled.55507f3e2aeea6f05780.svg',
-  sdto: 'https://www.wolvesville.com/static/media/icon_toxic_wolf_filled.0ebe6f78eede12ad2d2f.svg',
-  shbinh: 'https://www.wolvesville.com/static/media/icon_wolf_pacifist_filled.97ae2918aaaafd5210f8.svg',
-  tsnguoi: 'https://www.wolvesville.com/static/media/icon_headhunter_filled.8ddca10eccf8bc99b185.svg',
-  snhloat: 'https://www.wolvesville.com/static/media/icon_serial_killer_filled.c147edf428d21b027a29.svg',
-  ttac: 'https://www.wolvesville.com/static/media/icon_corruptor_filled.aeab23f48ccdafc9e168.svg',
-  ngkim: 'https://www.wolvesville.com/static/media/icon_alchemist_filled.7558c5b995cf04dcbff7.svg',
-  mnngu: 'https://www.wolvesville.com/static/media/icon_siren_filled.23983744832a9679f423.svg',
-  ttama: 'https://www.wolvesville.com/static/media/icon_evil_detective_filled.1cf2936d73c2000131f9.svg',
-  kphoa: 'https://www.wolvesville.com/static/media/icon_arsonist_filled.a1b7f7f34bbbc98314ae.svg',
-  hbcon: 'https://www.wolvesville.com/static/media/icon_flower_child_filled.2baaf5b46448690f1374.svg',
-  ngdem:  'https://www.wolvesville.com/static/media/icon_night_watchman_filled.c05b807c2175b21d4a62.svg',
-  mnu: 'https://www.wolvesville.com/static/media/icon_ghost_lady_filled.55288cd98460f1223690.svg',
-  txa: 'https://www.wolvesville.com/static/media/icon_marksman_filled.c7db2c55e0c213757ebb.svg',
-  tphan: 'https://www.wolvesville.com/static/media/icon_judge_filled.7753119d26562b9c0c75.svg',
-  nptich: 'https://www.wolvesville.com/static/media/icon_analyst_filled.85e6155f6456f0f3f5eb.svg',
-  nncam: 'https://www.wolvesville.com/static/media/icon_spirit_seer_filled.5b976e45e07ad3ea5a45.svg',
-  cbac: 'https://www.wolvesville.com/static/media/icon_gambler_filled.12cb7a36cc44bd6dacf8.svg',
-  py: 'https://www.wolvesville.com/static/media/icon_mortician_filled.7648b71cdb53465c2c5f.svg',
-  nsi: 'https://www.wolvesville.com/static/media/icon_violinist_filled.0f7ca9bd3d67c09d7cba.svg',
-  nghon: 'https://www.wolvesville.com/static/media/icon_conjuror_filled.ab8656e99e074040bcc7.svg',
-  nldo: 'https://www.wolvesville.com/static/media/icon_ferryman_filled.9bad4f063da688ce099f.svg',
-  tlbanh: 'https://www.wolvesville.com/static/media/icon_baker_filled.ffdd71f1e2b7b49e4d73.svg',
-  tren: 'https://www.wolvesville.com/static/media/icon_forger_filled.d46ae2f72572ea8f00ec.svg',
-  sptach: 'https://www.wolvesville.com/static/media/icon_split_wolf_filled.a537646389cb9e07a2f5.svg',
-  strang: 'https://static.wikia.nocookie.net/werewolf-online/images/a/a5/Werewolf_Fan_-_Psycho_crime_and_Killer_BP37.png/revision/latest/scale-to-width-down/250?cb=20240823073154'
+  // ===== PHE MA SÓI ===== (A→Z theo key)
+  acmong:   'https://www.wolvesville.com/static/media/icon_nightmare_werewolf_filled.eb9ba67a16a2d7afc1ba.svg', // 🐺 Sói Ác Mộng
+  alpha:    'https://www.wolvesville.com/static/media/icon_kitten_wolf_filled.0f568776b7ca8d5d50a1.svg',        // 🐺 Sói Mèo Con
+  minion:   'https://www.wolvesville.com/static/media/icon_shapeshifter_filled.047e52d078f13cf809d4.svg',       // 🐺 Kẻ Phản Bội
+  pssoi:    'https://www.wolvesville.com/static/media/icon_sorcerer_filled.8c8c679df285c6f122b9.svg',           // 🐺 Sói Phù Thủy 
+  scuong:   'https://www.wolvesville.com/static/media/icon_werewolf_berserk_filled.12ee2ec4c540ab7349c0.svg',   // 🐺 Sói Điên Cuồng
+  sdto:     'https://www.wolvesville.com/static/media/icon_toxic_wolf_filled.0ebe6f78eede12ad2d2f.svg',         // 🐺 Sói Độc Tố
+  shbinh:   'https://www.wolvesville.com/static/media/icon_wolf_pacifist_filled.97ae2918aaaafd5210f8.svg',      // 🐺 Sói Hòa Bình
+  shve:     'https://www.wolvesville.com/static/media/icon_guardian_wolf_filled.eae71fbc3fa823f34617.svg',      // 🐺 Sói Hộ Vệ
+  soidc:    'https://www.wolvesville.com/static/media/icon_alpha_werewolf_filled.74166752110af0b83bea.svg',     // 🐺 Sói Đầu Đàn
+  soituyet: 'https://www.wolvesville.com/static/media/icon_ghost_wolf_filled.fc3131b2365cdd1f5557.svg',         // 🐺 Sói Tuyết
+  spsu:     'https://www.wolvesville.com/static/media/icon_wolf_shaman_filled.92475ab32fdb1da1dded.svg',        // 🐺 Sói Pháp Sư
+  sptach:   'https://www.wolvesville.com/static/media/icon_split_wolf_filled.a537646389cb9e07a2f5.svg',         // 🐺 Sói Phân Tách
+  stthuat:  'https://www.wolvesville.com/static/media/icon_voodoo_werewolf_filled.55507f3e2aeea6f05780.svg',    // 🐺 Sói Tà Thuật
+  werecub:  'https://www.wolvesville.com/static/media/icon_junior_werewolf_filled.118d63fe2617f43b4fc7.svg',    // 🐺 Sói Con
+  werewolf: 'https://www.wolvesville.com/static/media/icon_werewolf_filled.ae752e6e4c098343f51f.svg',           // 🐺 Ma Sói
+  sttri:    'https://www.wolvesville.com/static/media/icon_wolf_seer_filled.06e1f433b13b3b37f070.svg',          // 🐺 Sói Tiên Tri
+
+  // ===== PHE DÂN LÀNG ===== 
+  bsi:       'https://www.wolvesville.com/static/media/icon_doctor_filled.20fa62bd956fdf7277aa.svg',             // 👨🏻‍🌾 Bác Sĩ
+  blang:     'https://www.wolvesville.com/static/media/icon_anarchist_filled.f0729c00f750b8a0e4f2.svg',          // 👨🏻‍🌾 Kẻ Phá Rối 
+  cbac:    'https://www.wolvesville.com/static/media/icon_gambler_filled.12cb7a36cc44bd6dacf8.svg',              // 👨🏻‍🌾 Con Bạc
+  cma:       'https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/icon_werewolf_assistant/role_con_ma.jpg', // 👨🏻‍🌾 Con Ma
+  dbom:      'https://www.wolvesville.com/static/media/icon_bomber_filled.a86d8d7a84e34f47907c.svg',             // 👨🏻‍🌾 Kẻ Đánh Bom
+  elder:     'https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/icon_werewolf_assistant/role_gia_lang.png', // 👨🏻‍🌾 Già Làng
+  gsu:       'https://www.wolvesville.com/static/media/icon_detective_filled.6f58542f98bb0bad55e9.svg',          // 👨🏻‍🌾 Thám Tử
+  guard:     'https://www.wolvesville.com/static/media/icon_bodyguard_filled.f0e44ef3c82404a0cbcf.svg',          // 👨🏻‍🌾 Bảo Vệ
+  hbi:       'https://www.wolvesville.com/static/media/icon_seer_filled.2dbdbb9f7e32df7a0d6e.svg',               // 👨🏻‍🌾 Tiên Tri 
+  hbcon:     'https://www.wolvesville.com/static/media/icon_flower_child_filled.2baaf5b46448690f1374.svg',       // 👨🏻‍🌾 Hoa Bé Con
+  hbinh:     'https://www.wolvesville.com/static/media/icon_pacifist_filled.c38071e2243a144974af.svg',           // 👨🏻‍🌾 Người Yêu Hòa Bình
+  hquang:    'https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/icon_werewolf_assistant/role_tien_tri_hao_quang.jpg', // 👨🏻‍🌾 Tiên Tri Hào Quang
+  hsi:       'https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/icon_werewolf_assistant/role_hiep_si.jpg', // 👨🏻‍🌾 Hiệp Sĩ
+  hunter:    'https://www.wolvesville.com/static/media/icon_beast_hunter_filled.8f57b3aafd979562e744.svg',       // 👨🏻‍🌾 Thợ Săn Quái Thú
+  lgac:      'https://www.wolvesville.com/static/media/icon_vigilante_filled.040b4792dabf660c3560.svg',          // 👨🏻‍🌾 Người Canh Gác
+  mayor:     'https://www.wolvesville.com/static/media/icon_mayor_filled.93d08f42621aa71d9ece.svg',              // 👨🏻‍🌾 Thị Trưởng
+  mnu:       'https://www.wolvesville.com/static/media/icon_ghost_lady_filled.55288cd98460f1223690.svg',         // 👨🏻‍🌾 Ma Nữ 
+  nbenh:     'https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/icon_werewolf_assistant/role_nguoi_benh.png', // 👨🏻‍🌾 Người Bệnh
+  ngdem:     'https://www.wolvesville.com/static/media/icon_night_watchman_filled.c05b807c2175b21d4a62.svg',     // 👨🏻‍🌾 Người Gác Đêm
+  nghon:     'https://www.wolvesville.com/static/media/icon_conjuror_filled.ab8656e99e074040bcc7.svg',           // 👨🏻‍🌾 Người Gọi Hồn 
+  nncam:     'https://www.wolvesville.com/static/media/icon_spirit_seer_filled.5b976e45e07ad3ea5a45.svg',        // 👨🏻‍🌾 Nhà Ngoại Cảm
+  nldo:      'https://www.wolvesville.com/static/media/icon_ferryman_filled.9bad4f063da688ce099f.svg',           // 👨🏻‍🌾 Người Lái Đò
+  nptich:    'https://www.wolvesville.com/static/media/icon_analyst_filled.85e6155f6456f0f3f5eb.svg',            // 👨🏻‍🌾 Nhà Phân Tích
+  nsi:       'https://www.wolvesville.com/static/media/icon_violinist_filled.0f7ca9bd3d67c09d7cba.svg',          // 👨🏻‍🌾 Nghệ Sĩ Vĩ Cầm
+  prince:    'https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/icon_werewolf_assistant/role_cong_chua.jpg', // 👨🏻‍🌾 Công Chúa
+  py:        'https://www.wolvesville.com/static/media/icon_mortician_filled.7648b71cdb53465c2c5f.svg',          // 👨🏻‍🌾 Pháp Y
+  seer:      'https://www.wolvesville.com/static/media/icon_aura_seer_filled.0dfd01b695fbf2dcf839.svg',          // 👨🏻‍🌾 Thầy Bói
+  spellcaster:'https://www.wolvesville.com/static/media/icon_grumpy_grandma_filled.4cbc5d802a69f41d39f4.svg',    // 👨🏻‍🌾 Bà Già Khó Tính
+  tlbanh:    'https://www.wolvesville.com/static/media/icon_baker_filled.ffdd71f1e2b7b49e4d73.svg',              // 👨🏻‍🌾 Thợ Làm Bánh
+  tren:      'https://www.wolvesville.com/static/media/icon_forger_filled.d46ae2f72572ea8f00ec.svg',             // 👨🏻‍🌾 Thợ Rèn
+  tphan:     'https://www.wolvesville.com/static/media/icon_judge_filled.7753119d26562b9c0c75.svg',              // 👨🏻‍🌾 Thẩm Phán
+  tsu:       'https://www.wolvesville.com/static/media/icon_seer_apprentice_filled.81480673499f6d53b00c.svg',    // 👨🏻‍🌾 Tiên Tri Tập Sự
+  ttu:       'https://www.wolvesville.com/static/media/icon_sheriff_filled.3495e4dbfc1660ade952.svg',            // 👨🏻‍🌾 Cảnh Sát Trưởng
+  tvan:      'https://www.wolvesville.com/static/media/icon_astronomer_filled.1e78dbcd9db03835ca37.svg',         // 👨🏻‍🌾 Nhà Thiên Văn Học
+  txa:       'https://www.wolvesville.com/static/media/icon_marksman_filled.c7db2c55e0c213757ebb.svg',           // 👨🏻‍🌾 Thiện Xạ
+  village:   'https://www.wolvesville.com/static/media/icon_villager_filled.bf9f7a2cfd5ce009de0f.svg',           // 👨🏻‍🌾 Dân Làng
+  witch:     'https://www.wolvesville.com/static/media/icon_witch_filled.baa5bea117d4c6955055.svg',              // 👨🏻‍🌾 Phù Thủy
+  'tough guy':'https://www.wolvesville.com/static/media/icon_tough_guy_filled.380bd44d80f0afe555e7.svg',         // 👨🏻‍🌾 Lực Sĩ
+
+  // ===== ĐỔI PHE =====
+  cupid:        'https://www.wolvesville.com/static/media/icon_cupid_filled.5a152d6f57204abcbba8.svg',           // 👨🏻‍🌾 Thần Tình Yêu
+  cursed:       'https://www.wolvesville.com/static/media/icon_cursed_human_filled.4175d58fa5f364f6983b.svg',    // 👨🏻‍🌾 Bán Sói
+  doppelganger: 'https://www.wolvesville.com/static/media/icon_grave_robber_filled.412f6ac1536a173e633e.svg',    // 👨🏻‍🌾 Nhân Bản
+
+  // ===== PHE THỨ 3 ===== 
+  tanner:  'https://www.wolvesville.com/static/media/icon_fool_filled.ab621444cb0413a541c0.svg',                 // 🎯 Thằng Ngố
+  tsnguoi: 'https://www.wolvesville.com/static/media/icon_headhunter_filled.8ddca10eccf8bc99b185.svg',           // 🎯 Thợ Săn Người
+  dgau:    'https://www.wolvesville.com/static/media/icon_bandit_filled.f57904efc4774eeec349.svg',               // 🔪 Du Côn
+  kphoa:   'https://www.wolvesville.com/static/media/icon_arsonist_filled.a1b7f7f34bbbc98314ae.svg',             // 🔪 Kẻ Phóng Hỏa
+  mcr:     'https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/icon_werewolf_assistant/role_ma_ca_rong.jpg', // 🔪 Ma Cà Rồng
+  mnngu:   'https://www.wolvesville.com/static/media/icon_siren_filled.23983744832a9679f423.svg',                // 🔪 Nhân Ngư
+  ngkim:   'https://www.wolvesville.com/static/media/icon_alchemist_filled.7558c5b995cf04dcbff7.svg',            // 🔪 Nhà Giả Kim
+  snhloat: 'https://www.wolvesville.com/static/media/icon_serial_killer_filled.c147edf428d21b027a29.svg',        // 🔪 Sát Nhân Hàng Loạt
+  strang:  'https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/icon_werewolf_assistant/role_soi_trang.jpg', // 🔪 Sói Trắng 
+  ttac:    'https://www.wolvesville.com/static/media/icon_corruptor_filled.aeab23f48ccdafc9e168.svg',            // 🔪 Tin Tặc
+  ttama:   'https://www.wolvesville.com/static/media/icon_evil_detective_filled.1cf2936d73c2000131f9.svg'        // 🔪 Thám Tử Ác Ma
 });
 
 function paintFactionSelect(){
@@ -2547,7 +2586,7 @@ $.removeEmptyNames.addEventListener('click', () => {
 });
 
   // ====== ROLES UI ======
-  function ensureDefaultRoles(){ if(!STATE.roles || Object.keys(STATE.roles).length===0){ STATE.roles = {werewolf:3, seer:1, witch:1, hsi:1, hunter:1, guard:1, cupid:1, spellcaster:1, prince:1}; } }
+  function ensureDefaultRoles(){ if(!STATE.roles || Object.keys(STATE.roles).length===0){ STATE.roles = {werewolf:2, shbinh:1, gsu:1, witch:1, hunter:1, guard:1, spellcaster:1, doppelganger:1, tsnguoi:1}; } }
 
   function renderRoles(){
   $.rolesList.innerHTML = '';
@@ -2558,18 +2597,31 @@ $.removeEmptyNames.addEventListener('click', () => {
   // Phe của vai mặc định
 const defaultFactionMap = {
   // Ma sói
-  werewolf: 'wolf', werecub: 'wolf', minion: 'wolf',
-  pssoi: 'wolf', soidc: 'wolf', soituyet: 'wolf', alpha: 'wolf', acmong: 'wolf', scuong: 'wolf', shbinh: 'wolf', sdto: 'wolf', shve: 'wolf', spsu: 'wolf', stthuat: 'wolf', sptach: 'wolf',
-
+  werewolf: 'wolf',
+  werecub: 'wolf',
+  minion: 'wolf',
+  pssoi: 'wolf',                   
+  acmong: 'wolf',                    
+  shve: 'wolf',                      
+  sttri: 'wolf',
+  soidc: 'wolf',
+  spsu: 'wolf', 
+  scuong: 'wolf',
+  soituyet: 'wolf',
+  alpha: 'wolf',
+  shbinh: 'wolf',
+  sdto: 'wolf',
+  stthuat: 'wolf',
+  sptach: 'wolf',
   // Dân làng
-  seer: 'village', witch: 'village', hunter: 'village',
-  guard: 'village', spellcaster: 'village',
-  prince: 'village', elder: 'village', 'tough guy': 'village',
+  seer: 'village',      witch: 'village',    hunter: 'village',   guard: 'village',
+  spellcaster: 'village', cbac: 'village',   hbcon: 'village',    mnu: 'village',
+  prince: 'village',     elder: 'village', 'tough guy': 'village', nsi: 'village',
   mayor: 'village', village: 'village', hbi: 'village',
   dbom: 'village', tvan: 'village', lgac: 'village', gsu: 'village',
   tsu: 'village', hquang: 'village', nbenh: 'village', cma: 'village',
   hbinh: 'village', ttu: 'village', hsi: 'village', blang: 'village',
-  cbac: 'village', hbcon: 'village', mnu: 'village', nsi: 'village', ngdem: 'village', nghon: 'village', nldo: 'village', nncam: 'village', nptich: 'village', py: 'village', tphan: 'village', txa: 'village', tlbanh: 'village', tren: 'village', bsi: 'village',
+  ngdem: 'village', nghon: 'village', nldo: 'village', nncam: 'village', nptich: 'village', py: 'village', tphan: 'village', txa: 'village', tlbanh: 'village', tren: 'village', bsi: 'village',
 
   // Đổi phe
   doppelganger: 'swap', cursed: 'swap', cupid: 'swap',
@@ -2613,7 +2665,7 @@ const defaultFactionMap = {
   const addSep = (label)=>{
     const sep = document.createElement('div');
     sep.className = 'sep';
-    sep.textContent = `--------------------- ${label} ---------------------`;
+    sep.textContent = ` ❤️ ${label} ❤️ `;
     $.rolesList.appendChild(sep);
   };
 
@@ -2629,7 +2681,7 @@ const iconHTML   = roleIconHTMLByKey(role.key, leadingEmoji, labelText);
 
 name.innerHTML = `<span class="pill" style="border-color:${role.color||'#334'}">
   <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="${role.color||'#888'}"/></svg>
-  ${iconHTML}${esc(labelText)}
+  ${iconHTML}${roleNameSpan(labelText)}
 </span>`;
 
   // Cột 2: nút "Hiện" (mở modal – title có Hào quang/Chức năng từ ROLE_META)
@@ -2715,7 +2767,7 @@ if (isKnight && prev > 0 && v === 0) {
   const nameDiv = document.createElement('div');
   nameDiv.innerHTML = `<span class="pill" style="border-color:${colorMap[faction]}">
     <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="${colorMap[faction]}"/></svg>
-    🧩 ${escapeHtml(name)}
+    🧩 ${roleNameSpan(name)}
   </span>`;
 
   const hint = document.createElement('div');
@@ -2806,7 +2858,87 @@ const totalEl = document.getElementById('rolesTotal');
   renderRoles(); updateSlotsLeft(); save();
 });
 
-  $.resetRoles.addEventListener('click', ()=>{ STATE.roles = {werewolf:3, seer:1, hsi:1, witch:1, hunter:1, guard:1, cupid:1, spellcaster:1, prince:1}; STATE.customRoles = {}; renderRoles(); save(); });
+  $.resetRoles.addEventListener('click', ()=>{ STATE.roles = {werewolf:2, shbinh:1, gsu:1, witch:1, hunter:1, guard:1, spellcaster:1, doppelganger:1, tsnguoi:1}; STATE.customRoles = {}; renderRoles(); save(); });
+// ===== Thợ săn người (tsnguoi) – helpers =====
+function stripVN(s){
+  return String(s||'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/đ/g,'d').toLowerCase();
+}
+function isHeadhunterRoleName(role){
+  // role là chuỗi hiển thị có emoji, ví dụ "🐺 Thợ Săn Người"
+  return stripVN(stripLeadingEmoji(role)).includes('tho san nguoi');
+}
+function isHeadhunterTarget(name){
+  const map = STATE.headhunterTargets || {};
+  return Object.values(map).includes(name);
+}
+function getHeadhunterHuntersByTarget(name){
+  const map = STATE.headhunterTargets || {};
+  return Object.keys(map).filter(hName => map[hName] === name);
+}
+function pickHeadhunterTargets(){
+  STATE.headhunterTargets = {}; // reset mỗi lần bấm "Chia ngẫu nhiên"
+
+  const list = STATE.assignments || [];
+  const hunters = list.filter(p => isHeadhunterRoleName(p.role));
+  if (!hunters.length) return;
+
+  // Tập mục tiêu: mọi người thuộc phe dân làng (factionOf(role).cls === 'f-vil')
+  const villagers = list.filter(p => {
+  const isVil = (factionOf(p.role)?.cls === 'f-vil');
+  const plain = stripLeadingEmoji(p.role);
+  const isGhost = String(plain).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                   .toLowerCase().includes('con ma');
+  return isVil && !isGhost;
+});
+
+
+  const msgs = [];
+  hunters.forEach(h => {
+    // Không chọn trùng mục tiêu cho nhiều thợ săn nếu có thể
+    const alreadyTaken = new Set(Object.values(STATE.headhunterTargets));
+    const pool = villagers.filter(v => v.name !== h.name && !alreadyTaken.has(v.name));
+    if (!pool.length) return; // không còn dân để gán
+
+    const pick = pool[Math.floor(rng(pool.length))];
+    STATE.headhunterTargets[h.name] = pick.name;
+
+    msgs.push(`Người chơi "${pick.name}" (👨🏻‍🌾 ${stripLeadingEmoji(pick.role)}) là mục tiêu săn lùng của người chơi "${h.name}" (🎯 Thợ săn người).`);
+  });
+
+  if (msgs.length) alert(msgs.join('\n'));
+  save();
+}
+
+/**
+ * Gọi hàm này NGAY SAU khi nạn nhân (mục tiêu săn lùng) đã bị loại.
+ * @param {string} victimName - tên nạn nhân
+ * @param {boolean} wasLynched - true nếu chết vì Treo cổ, false nếu chết vì lý do khác
+ */
+function checkHeadhunterOnTargetDeath(victimName, wasLynched){
+  const hunters = getHeadhunterHuntersByTarget(victimName);
+  if (!hunters.length) return;
+
+  hunters.forEach(hName => {
+    const hunter = (STATE.assignments||[]).find(p => p.name === hName);
+    const hunterAlive = hunter && !(STATE.dead && STATE.dead[hName]);
+
+    if (wasLynched){
+      alert(`🎉 GAME KẾT THÚC 🎉\n"${hName}" là (🎯 Thợ săn người) chiến thắng do mục tiêu săn lùng "${victimName}" bị Treo cổ.`);
+    } else {
+      alert(`🎯 Mục tiêu săn lùng "${victimName}" đã chết vì lý do khác.\n"${hName}" (🎯 Thợ săn người) chuyển thành (👨🏻‍🌾 Dân Làng).`);
+      if (hunterAlive && hunter){
+        hunter.role = '👨🏻‍🌾 Dân Làng';  // chuyển vai
+      }
+    }
+    // Xoá ràng buộc để không kích hoạt lại
+    if (STATE.headhunterTargets) delete STATE.headhunterTargets[hName];
+  });
+
+  save();
+  renderAssignments();
+}
 
   // ====== ASSIGNMENT ======
   $.assignBtn.addEventListener('click', ()=>{
@@ -2842,6 +2974,9 @@ const totalEl = document.getElementById('rolesTotal');
     STATE.doppelTargets = {};         // reset target khi bắt đầu ván mới
     STATE.firstKillPromptShown = false; // cờ nhắc “lần giết đầu” cho ván mới
     STATE.apprenticePromoted = false;  // reset thăng cấp của Tập sự
+      // 🎯 TSNGUOI: gán mục tiêu ngẫu nhiên cho Thợ săn người (nếu có)
+    STATE.headhunterTargets = {};
+    pickHeadhunterTargets();
 
     renderAssignments();
     $.reshuffleBtn.disabled = false; $.revealAllBtn.disabled=false; $.copyBtn.disabled=false; $.sortBtn.disabled=false;
@@ -2911,7 +3046,7 @@ $.reshuffleBtn.addEventListener('click', () => {
     return {order:3, cls:'f-third'};
   }
     // Phe Sói
-    if (t.includes('soi con') || t.includes('ke phan boi') || t.includes('ma soi')|| t.includes('soi phu thuy')|| t.includes('soi đau đan')|| t.includes('soi tuyet')|| t.includes('soi meo con')|| t.includes('soi ac mong')|| t.includes('soi đien cuong')|| t.includes('soi phap su')|| t.includes('soi ho ve')|| t.includes('soi ta thuat')|| t.includes('soi hoa binh')|| t.includes('soi đoc to')|| t.includes('soi phan tach'))
+    if (t.includes('soi con') || t.includes('ke phan boi') || t.includes('ma soi')|| t.includes('soi phu thuy')|| t.includes('soi đau đan')|| t.includes('soi tuyet')|| t.includes('soi meo con')|| t.includes('soi ac mong')|| t.includes('soi đien cuong')|| t.includes('soi phap su')|| t.includes('soi ho ve')|| t.includes('soi ta thuat')|| t.includes('soi hoa binh')|| t.includes('soi đoc to')|| t.includes('soi phan tach')|| t.includes('soi tien tri'))
       return {order:0, cls:'f-wolf'};
     // Phe Dân
     if (t.includes('tien tri')||t.includes('phu thuy')||
@@ -2919,7 +3054,7 @@ $.reshuffleBtn.addEventListener('click', () => {
         t.includes('dan lang')||t.includes('cong chua')||t.includes('gia lang')||
         t.includes('luc si')||t.includes('thi truong')||t.includes('thay boi')||
         t.includes('ke đanh bom')||t.includes('nha thien van hoc')||t.includes('nguoi canh gac')||
-        t.includes('tham tu')||t.includes('tien tri tap su')||t.includes('tien tri hao quang')||t.includes('nguoi benh')||t.includes('ke pha roi')||
+        (t.includes('tham tu')&& !t.includes('tham tu ac ma'))||t.includes('tien tri tap su')||t.includes('tien tri hao quang')||t.includes('nguoi benh')||t.includes('ke pha roi')||
         t.includes('con ma')||t.includes('nguoi yeu hoa binh')||t.includes('hiep si')||t.includes('canh sat truong')||t.includes('nghe si vi cam')||t.includes('nguoi lai đo')||t.includes('hoa be con')||t.includes('nguoi gac đem')||t.includes('ma nu')||t.includes('thien xa')||t.includes('tham phan')||t.includes('nha phan tich')||t.includes('nha ngoai cam')||t.includes('con bac')||t.includes('phap y')||t.includes('nguoi goi hon')||t.includes('tho lam banh')||t.includes('tho ren')||t.includes('bac si'))
       return {order:1, cls:'f-vil'};
     // Phe đổi phe
@@ -2992,85 +3127,11 @@ function toggleDeadByName(name){
   renderAssignments(); save();
 
   // === Nhánh VỪA CHẾT ===
-  if (justDied) {
-    // 👥 Nhân bản: chuyển vai nếu target vừa chết
-    applyDoppelTransferForTarget(name, role);
-
-    const low = ascii(role);
-    const includesAny = (s, arr) => arr.some(k => s.includes(k));
-    const isWolfCub   = includesAny(low, ['soi con']);
-    const isWolfBoss  = includesAny(low, ['soi dau dan','soi đau đan']);
-    const isAlpha     = includesAny(low, ['soi meo con']);
-    const isMinion    = includesAny(low, ['ke phan boi']);
-    const is_pssoi    = includesAny(low, ['soi phu thuy']);
-    const isSnowWolf  = includesAny(low, ['soi tuyet']);
-    const isWolfSide  = (factionOf(role)?.cls === 'f-wolf');
-
-    const is_dbom     = includesAny(low, ['ke danh bom','ke đanh bom']);
-    const isHunter    = includesAny(low, ['tho san quai thu']);
-
-    if (isWolfCub)  alert('Vai trò "🐺 Sói Con" đã chết, hãy thông báo cho Bầy Sói được giết 2 người vào đêm hiện tại/tiếp theo.');
-    if (isWolfBoss) alert('Vai trò "☠️ Sói Đầu Đàn" đã chết, hãy thông báo cho Bầy Sói chỉ còn có thể giết 1 người mỗi đêm vào đêm tiếp theo.');
-    if (isSnowWolf) alert('Vai trò "❄️ Sói Tuyết" đã chết, cũng hãy làm cho bạn đồng hành của "❄️ Sói Tuyết" chết theo.');
-    if (is_dbom)    alert('Vai trò "💣️ Kẻ Đánh Bom" đã chết, cũng hãy làm cho 2 người bên cạnh "💣️ Kẻ Đánh Bom" chết theo (không tính những người đã chết trước đó).');
-    if (isHunter)   alert('Vai trò "🏹 Thợ săn" đã chết, nếu:\n\nBan ngày: Hãy thông báo cho "🏹 Thợ Săn" nhắm bắn ngay lập tức.\nBan đêm: Hãy làm cho người mà "🏹 Thợ Săn" đã nhắm bắn chết theo.');
-
-    // Nếu chính 🐱 Sói Mèo Con chết -> tắt vĩnh viễn quyền hóa sói
-    if (isAlpha) {
-      STATE.alphaCanInfect = false;
-      STATE.alphaUsedOrLost = true;
-      save();
-    }
-    
-
-    // “Nạp” quyền cho 🐱 Sói Mèo Con nếu MỘT SÓI (không phải Alpha/Kẻ Phản bội/Sói Phù Thủy) chết BAN NGÀY
-    const alphaArmed = !!STATE.alphaCanInfect;
-const alphaAlive = hasAliveAlpha();
-
-if (alphaAlive && isWolfSide && !isAlpha && !alphaArmed && !STATE.alphaUsedOrLost && !isMinion && !is_pssoi) {
-  const ok = confirm('Có phải thành viên phe 🐺 Ma Sói vừa chết do bị Treo cổ hay không?\n\nChọn "OK" = Phải (bị Treo Cổ)\nChọn "Cancel" = Không phải (lý do khác)');
-  if (ok) {
-    STATE.alphaCanInfect = true;
-    save();
-    alert('Hãy thông báo cho "🐱 Sói Mèo Con" được phép hóa sói 1 nạn nhân vào đêm tiếp theo.');
-  }
-} else if (!alphaAlive && STATE.alphaCanInfect) {
-  // Không có Alpha trong ván (hoặc Alpha đã chết) -> vô hiệu quyền còn treo
-  STATE.alphaCanInfect = false;
-  save();
+if (justDied) {
+  // 👥 Nhân bản: chuyển vai nếu target vừa chết
+  applyDoppelTransferForTarget(name, role);
+  // (Không còn ngoại lệ nào khác ở đây)
 }
-// ✅ Công Chúa vừa CHẾT → Hiệp Sĩ (còn sống) chết theo (kèm tên)
-if (includesAny(low, ['cong chua'])) {
-  const list = STATE.assignments || [];
-  const livingKnights = list.filter(p => {
-    const alive = !(STATE.dead && STATE.dead[p.name]);
-    return alive && ascii(p.role).includes('hiep si');
-  });
-
-  if (livingKnights.length) {
-    STATE.dead = STATE.dead || {};
-    const killedKnights = [];
-
-    livingKnights.forEach(kn => {
-      STATE.dead[kn.name] = true;
-      applyDoppelTransferForTarget(kn.name, kn.role);
-      killedKnights.push(kn.name);
-    });
-
-    renderAssignments();
-    save();
-
-    if (killedKnights.length === 1) {
-      alert(`Vì không thể bảo vệ được "👑 Công Chúa" nên "${killedKnights[0]}" (💂‍♂ Hiệp Sĩ) đã treo cổ tự vẫn`);
-    } else {
-      const listStr = killedKnights.map(n => `• "${n}" (💂‍♂ Hiệp Sĩ)`).join('\n');
-      alert(`Vì không thể bảo vệ được Công Chúa nên các Hiệp Sĩ sau đã treo cổ tự vẫn:\n${listStr}`);
-    }
-  }
-}
-
-    return; // kết thúc nhánh vừa chết
-  }
 
   // === Nhánh ĐƯỢC CỨU (từ chết -> sống) ===
   if (wasDead && !STATE.dead[name]) {
@@ -3081,6 +3142,7 @@ if (includesAny(low, ['cong chua'])) {
     }
   }
 }
+
 
 function displayRole(role) {
   // Nếu là vai trò tùy chỉnh (tên tồn tại trong STATE.customRoles) thì thêm 🧩
@@ -3207,6 +3269,16 @@ qsa('[data-kill]', $.assignments).forEach(btn => {
     const i = Number(e.currentTarget.getAttribute('data-kill'));
     const player = STATE.assignments?.[i];
     if (!player) return;
+        // 🎯 THỢ SĂN NGƯỜI – EARLY EXIT CHO MỤC TIÊU
+    // Chỉ xử lý khi nạn nhân còn sống; nếu đã chết thì nhấn "Giết" đang là "Cứu"
+    const isDeadNow = !!(STATE.dead && STATE.dead[player.name]);
+if (!isDeadNow && isHeadhunterTarget(player.name)) {
+  const wasLynched = confirm('Có phải người này vừa bị Treo cổ hay không?\n\nChọn "OK" = Phải (bị Treo cổ)\nChọn "Cance" = Không phải (lý do khác)');
+
+  toggleDeadByName(player.name);
+  checkHeadhunterOnTargetDeath(player.name, wasLynched);
+  return;
+}
 
     const name = player.name;
     const role = String(player.role || '');
@@ -3235,7 +3307,7 @@ if (!isDead && !STATE.firstKillPromptShown) {
 }
     // --- Ngoại lệ 1: 🌑 Bán Sói ---
     if (!isDead && ascii(role).includes('ban soi')) {
-      const ok = confirm('Có phải vai trò "🌑 Bán Sói" bị phe 🐺 Ma Sói cắn hay không?\n\nChọn "OK" = Phải (bị Ma Sói cắn)\nChọn "Cancel" = Không phải (lý do khác)');
+      const ok = confirm('Có phải vai trò "🌑 Bán Sói" vừa bị 🐺 Ma Sói cắn hay không?\n\nChọn "OK" = Phải (bị Ma Sói cắn)\nChọn "Cancel" = Không phải (lý do khác)');
       if (ok) {
         // Hóa Ma sói: đổi vai, không bị loại, và "Hiện" vai
         player.role = '🐺 Ma Sói';
@@ -3253,7 +3325,7 @@ if (!isDead && !STATE.firstKillPromptShown) {
     // --- Ngoại lệ 2: 😓 Thằng Ngố ---
     // Yêu cầu mới: hỏi "Có phải ... bị Treo cổ hay không?"
     if (!isDead && ascii(role).includes('thang ngo')) {
-      const ok = confirm('Có phải vai trò "😓 Thằng Ngố" bị Treo cổ hay không?\n\nChọn "OK" = Phải (bị Treo cổ)\nChọn "Cancel" = Không phải (lý do khác)');
+      const ok = confirm('Có phải vai trò "😓 Thằng Ngố" vừa bị Treo cổ hay không?\n\nChọn "OK" = Phải (bị Treo cổ)\nChọn "Cancel" = Không phải (lý do khác)');
       if (ok) {
         // Treo cổ -> Chán đời THẮNG và Game kết thúc (đánh dấu chết + hiện vai + thông báo)
         STATE.dead = STATE.dead || {};
@@ -3271,190 +3343,7 @@ if (!isDead && !STATE.firstKillPromptShown) {
       }
     }
    
-   // --- Ngoại lệ 3: 👴 Già Làng ---
-    if (!isDead && ascii(role).includes('gia lang')) {
-      const ok = confirm('Có phải vai trò "👴 Già Làng" đã chết cả 2 mạng không?\n\nChọn "OK" = Phải (đã chết cả 2 mạng)\nChọn "Cancel" = Không phải (chưa chết cả 2 mạng)');
-      if (ok) {
-        STATE.dead = STATE.dead || {};
-        STATE.dead[name] = true;
-        renderAssignments();
-        save();
-        // Auto sắp xếp giống hành vi "Giết"
-        alert('Vai trò "👴 Già Làng" đã chết, vào đêm tiếp theo, hãy thông báo cho phe 👨🏻‍🌾 Dân Làng không thể sử dụng chức năng vào đêm hiện tại.');
-      }
-      // Dù OK hay Cancel đều kết thúc tại đây (Cancel = giữ nguyên, OK = đã set chết)
-      return;
-    }
-// --- Ngoại lệ 4: 👑 Công Chúa ---
-if (!isDead && ascii(role).includes('cong chua')) {
-  const ok = confirm(
-    'Có phải vai trò "👑 Công Chúa" bị Treo cổ hay không?\n\n' +
-    'Chọn "OK" = Phải (bị Treo cổ)\n' +
-    'Chọn "Cancel" = Không phải (lý do khác)'
-  );
-
-  if (ok) {
-    // Treo cổ -> lật bài, KHÔNG bị loại
-    STATE.reveal[i] = true;
-    if (STATE.dead) delete STATE.dead[name];
-    renderAssignments();
-    save();
-    alert('Hãy thông báo cho Mọi người: Người chơi "' + name + '" là (👑 Công Chúa). Treo cổ THẤT BẠI và đêm tiếp theo bắt đầu.');
-    return;
-  } else {
-    // ❗️Không phải treo cổ -> ưu tiên xử lý "hóa sói" nếu đang có quyền
-    if (STATE.alphaCanInfect) {
-      if (!hasAliveAlpha()) {
-        // Alpha không còn sống -> tắt quyền còn treo, KHÔNG hỏi gì thêm
-        STATE.alphaCanInfect = false;
-        save();
-      } else {
-        const low = ascii(role);
-        const isWolfSideTarget = (factionOf(role)?.cls === 'f-wolf');
-        const isVampire   = low.includes('ma ca rong'); // 🧛 Ma Cà Rồng
-        const isWolfMage  = low.includes('soi phu thuy'); // ☄️ Sói Phù Thủy
-
-        // ☄️ Sói Phù Thủy: vẫn hỏi có bị sói cắn (đặc biệt), nếu có -> hóa sói thất bại và MẤT quyền
-        if (isWolfMage) {
-          const bitten = confirm(
-            'Có phải vai trò "☄️ Sói Phù Thủy" vừa bị 🐺 Ma Sói cắn hay không?\n\n' +
-            'Chọn "OK" = Phải (bị Ma Sói cắn)\n' +
-            'Chọn "Cancel" = Không phải (lý do khác)'
-          );
-          if (bitten) {
-            alert('Chức năng hóa sói của "🐱 Sói Mèo Con" THẤT BẠI, hãy thông báo cho "🐱 Sói Mèo Con" đã mất chức năng hóa sói.');
-            STATE.alphaCanInfect = false;
-            STATE.alphaUsedOrLost = true;
-            save();
-            return; // không giết ở đây
-          }
-          // Không phải do sói cắn -> rơi xuống "giết thường"
-        } else if (!isWolfSideTarget) {
-          // Mục tiêu KHÔNG thuộc phe Sói
-          if (isVampire) {
-            // 🧛 Ma Cà Rồng: hóa sói thất bại và MẤT quyền
-            alert('Chức năng hóa sói của "🐱 Sói Mèo Con" THẤT BẠI, hãy thông báo cho "🐱 Sói Mèo Con" đã mất chức năng hóa sói.');
-            STATE.alphaCanInfect = false;
-            STATE.alphaUsedOrLost = true;
-            save();
-            // vẫn rơi xuống xử lý "giết thường" ở dưới
-          } else {
-            // Hỏi có phải bị sói cắn không?
-            const bitten = confirm(
-              `Có phải vai trò "${role}" vừa bị 🐺 Ma Sói cắn hay không?\n\n` +
-              'Chọn "OK" = Phải (bị Ma Sói cắn)\n' +
-              'Chọn "Cancel" = Không phải (lý do khác)'
-            );
-
-            if (bitten) {
-              // Hỏi có được bảo vệ?
-              const prot = confirm(
-                'Có phải vai trò này đang được bảo vệ bởi "💂‍♂ Hiệp Sĩ", "🛡️ Bảo Vệ" hoặc "🧙‍♂️ Phù Thủy" hay không?\n\n' +
-                'Chọn "OK" = Phải (được bảo vệ)\n' +
-                'Chọn "Cancel" = Không phải (không được bảo vệ)'
-              );
-
-              if (prot) {
-                // Được bảo vệ -> giữ quyền cho đêm sau
-                alert('Chức năng hóa sói của "🐱 Sói Mèo Con" THẤT BẠI, hãy thông báo cho "🐱 Sói Mèo Con" được hóa sói lại vào đêm sau.');
-                return;
-              } else {
-                // ✅ Hóa sói thành công
-                STATE.assignments[i].role = '🐺 Ma Sói';
-                if (STATE.dead) delete STATE.dead[name];
-                renderAssignments(); save();
-                alert(`"${name}" vai trò "${role}" bị hóa thành 🐺 Ma Sói, hãy thông báo cho người này thức dậy cùng Bầy Sói.`);
-                STATE.alphaCanInfect = false;
-                STATE.alphaUsedOrLost = true;
-                save();
-                return;
-              }
-            }
-            // Không phải do sói cắn -> rơi xuống "giết thường"
-          }
-        }
-        // Nếu mục tiêu là phe Sói (trừ Sói Phù Thủy đã xử lý), không áp dụng hóa sói -> rơi xuống "giết thường"
-      }
-    }
-
-    // Fallback: xử lý loại bình thường
-    toggleDeadByName(name);
-    return;
-  }
-}
-  
-// --- Ngoại lệ 5b: Chế độ cắn "hóa sói" của Sói Mèo Con khi đã được nạp (alphaCanInfect) ---
-if (!isDead && STATE.alphaCanInfect) {
-  const low = ascii(role);
-  const isWolfSideTarget = (factionOf(role)?.cls === 'f-wolf');
-  const isVampire   = low.includes('ma ca rong');
-  const isWolfMage  = low.includes('soi phu thuy'); // ☄️ Sói Phù Thủy
-
-  // ❗️Trường hợp đặc biệt: Sói Phù Thủy (dù thuộc phe Sói) vẫn cần hỏi khi 🐱 Sói Mèo Con(Alpha) đang nạp quyền
-  if (isWolfMage) {
-    const bitten = confirm(
-      'Có phải vai trò "☄️ Sói Phù Thủy" vừa bị 🐺 Ma Sói cắn hay không?\n\n' +
-      'Chọn "OK" = Phải (bị Ma Sói cắn)\n' +
-      'Chọn "Cancel" = Không phải (lý do khác)'
-    );
-    if (bitten) {
-      alert('Chức năng hóa sói của "🐱 Sói Mèo Con" THẤT BẠI, hãy thông báo cho "🐱 Sói Mèo Con" đã mất chức năng hóa sói.');
-      STATE.alphaCanInfect = false;
-      STATE.alphaUsedOrLost = true;   // ⬅️ đánh dấu đã “xài/mất” 1 lần
-      save();
-      return;                          // không giết ở đây
-    } else {
-      toggleDeadByName(name);          // lý do khác -> bị loại bình thường
-      return;
-    }
-  }
-
-  // Mục tiêu KHÔNG thuộc phe Sói -> áp dụng quy trình hoá sói như cũ
-  if (!isWolfSideTarget) {
-    // Nếu là Ma cà rồng -> hoá sói thất bại và MẤT quyền vĩnh viễn
-    if (isVampire) {
-      alert('Chức năng hóa sói của "🐱 Sói Mèo Con" THẤT BẠI, hãy thông báo cho "🐱 Sói Mèo Con" đã mất chức năng hóa sói.');
-      STATE.alphaCanInfect = false;
-      STATE.alphaUsedOrLost = true;   // ⬅️ đánh dấu đã “xài/mất” 1 lần
-      save();
-      // Không return => rơi xuống xử lý giết thường (Ma cà rồng vốn đêm không chết bởi Sói, nhưng bạn vẫn đang dùng UI đánh dấu)
-    } else {
-      // Hỏi: có phải nạn nhân bị Ma sói cắn không?
-      const bitten = confirm(
-        `Có phải vai trò "${role}" vừa bị 🐺 Ma Sói cắn hay không?\n\n` +
-        'Chọn "OK" = Phải (bị Ma Sói cắn)\n' +
-        'Chọn "Cancel" = Không phải (lý do khác)'
-      );
-
-      if (bitten) {
-        // Kiểm tra được bảo vệ?
-        const prot = confirm(
-          'Có phải vai trò này đang được bảo vệ bởi "💂‍♂ Hiệp Sĩ", "🛡️ Bảo Vệ" hoặc "🧙‍♂️ Phù Thủy" hay không?\n\n' +
-          'Chọn "OK" = Phải (được bảo vệ)\n' +
-          'Chọn "Cancel" = Không phải (không được bảo vệ)'
-        );
-
-        if (prot) {
-          alert('Chức năng hóa sói của "🐱 Sói Mèo Con" THẤT BẠI, hãy thông báo cho "🐱 Sói Mèo Con" được hóa sói lại vào đêm sau.');
-          return; // vẫn còn quyền cho đêm sau (KHÔNG set usedOrLost)
-        } else {
-          // Hoá sói thành công
-          player.role = '🐺 Ma Sói';
-          if (STATE.dead) delete STATE.dead[name];
-          renderAssignments(); save();
-          alert(`"${name}" vai trò "${role}" bị hóa thành 🐺 Ma Sói, hãy thông báo cho người này thức dậy cùng Bầy Sói.`);
-          STATE.alphaCanInfect = false;
-          STATE.alphaUsedOrLost = true;   // ⬅️ đã dùng xong 1 lần
-          save();
-          return;
-        }
-      }
-      // Không phải do Sói cắn -> rơi xuống xử lý giết thường ở dưới
-    }
-  }
-  // Nếu rơi xuống đây: hoặc là mục tiêu phe Sói (không phải Pháp sư sói),
-  // hoặc Vampire/khác sau khi đã hiển thị thông báo thất bại.
-}
+   
 // --- Ngoại lệ: MỌI vai trò THÔNG TIN -> thăng cấp cho "🔮 Tiên Tri Tập Sự" (chỉ lần ĐẦU) ---
 if (!isDead) {
   // 1) Xác định vai vừa bị "Giết" có phải là 1 trong các vai thông tin hay không
@@ -3503,7 +3392,7 @@ if (!isDead) {
     }
 
     const ok = confirm(
-      'Có phải vai trò "💪 Lực Sĩ" vừa bị Ma Sói cắn không?\n\n' +
+      'Có phải vai trò "💪 Lực Sĩ" vừa bị 🐺 Ma Sói cắn không?\n\n' +
       'Chọn "OK" = Phải (bị Ma Sói cắn)\n' +
       'Chọn "Cancel" = Không (lý do khác)'
     );
@@ -3531,9 +3420,8 @@ if (!isDead) {
       const attackerRole = attacker ? `${attacker.name}` : '🐺 Ma Sói';
 
       alert(
-        `Hãy thông báo cho vai trò "💪 Lực Sĩ" bị "${attackerRole}" - vai trò "🐺 Ma Sói" cắn ` +
-        `và để vai trò "💪 Lực Sĩ" tham gia thảo luận và biểu quyết vào buổi sáng ` +
-        `và "Giết" lại vai trò "💪 Lực Sĩ" vào đêm tiếp theo.`
+        `Hãy thông báo cho vai trò "💪 Lực Sĩ" bị "${attackerRole}" (🐺 Ma Sói) cắn ` +
+        `và hãy "Giết" lại vai trò "💪 Lực Sĩ" vào đêm tiếp theo.`
       );
       return;
     } else {
@@ -3543,24 +3431,6 @@ if (!isDead) {
       return;
     }
   }
-}
-
-// --- Ngoại lệ 8: 🤒 Người bệnh ---
-if (!isDead && ascii(role).includes('nguoi benh')) {
-  const ok = confirm(
-    'Có phải vai trò "🤒 Người Bệnh" vừa bị Ma Sói cắn hay không?\n\n' +
-    'Chọn "OK" = Phải (bị Ma Sói cắn)\n' +
-    'Chọn "Cancel" = Không phải (lý do khác)'
-  );
-
-  // Bị loại bình thường trong cả hai trường hợp
-  toggleDeadByName(name);  // (hàm này tự auto-sort giống giết thường)
-
-  // Nếu đúng là do Ma sói cắn thì thêm thông báo cho bầy sói
-  if (ok) {
-    alert('Hãy thông báo cho phe 🐺 Ma Sói không được giết người nào vào đêm tiếp theo.');
-  }
-  return; // đã xử lý xong Người bệnh
 }
 
     // Mặc định: toggle chết / cứu như cũ
@@ -3623,6 +3493,11 @@ function hasAliveAlpha(){
     return alive && role.includes('soi meo con');
   });
 }
+function roleNameSpan(fullName){
+  const plain = stripLeadingEmoji(fullName || '');
+  return `<span class="role-name truncate-10" title="${esc(plain)}">${esc(plain)}</span>`;
+}
+
 // ==== Helpers cho nhận diện vai từ tên hiển thị (emoji + tiếng Việt) ====
 function _toAscii(s){
   return String(s||'')
