@@ -1911,7 +1911,7 @@ header {
   </div>
 
   <div class="footer no-print">Created by Dang Khoa ❤️ – Lưu tự động, hoạt động offline.</div>
-  <div class="footer no-print">Phiên bản cập nhật mới nhất: 23:45 22/09/2025</div>
+  <div class="footer no-print">Phiên bản cập nhật mới nhất: 22:15 25/09/2025</div>
   <!-- Modal xem mô tả vai -->
   <div id="roleModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal" role="document">
@@ -1976,6 +1976,18 @@ header {
     const esc = s => String(s).replace(/[&<>"']/g, m => ({
     "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
   }[m]));
+
+// Bóc emoji/ký hiệu đầu chuỗi (giữ lại chữ)
+function stripLeadingEmoji(s){
+  return String(s).replace(/^[^\p{L}\p{N}]+/u, '').trim();
+}
+// Chuẩn hoá bỏ dấu (ASCII hoá)
+function toAscii(s){
+  return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+              .replace(/đ/g,'d')
+              .toLowerCase();
+}
+
   function auraLabel(v){ return Number(v)===1 ? 'Ác' : 'Thiện'; }
   function funcLabel(v){ return Number(v)===1 ? 'Không' : 'Có'; }
   const $ = {
@@ -2316,6 +2328,26 @@ document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') doppelModal.clo
 { key:'ngkim', name:'🔪 Nhà Giả Kim', hint:'Mỗi đêm, Nhà Giả Kim sẽ đưa 2 bình thuốc cho 2 người chơi khác nhau, 1 bình đỏ và 1 bình đen. Người được đưa bình thuốc đen sẽ chết vào cuộc bỏ phiếu sáng hôm sau, còn người nhận bình đỏ phải nhận đến bình đỏ thứ 2 mới chết vào cuộc bỏ phiếu sáng hôm sau. Các lượt bảo vệ có thể ngăn chặn bình thuốc đen nhưng không thể ngăn chặn bình thuốc đỏ (trừ lượt bảo vệ của Hiệp Sĩ). Nhà Giả Kim chiến thắng khi còn lại cuối cùng.', color:'#eab308' },
 { key:'mnngu', name:'🔪 Nhân Ngư', hint:'Mỗi đêm, Nhân Ngư có thể chọn ra 3 người để mê hoặc, hoặc có thể giết tối đa 2 người đã mê hoặc. Nếu Nhân Ngư chết thì những người bị mê hoặc cũng sẽ chết theo. Việc mê hoặc vượt qua mọi lượt bảo vệ (trừ Hiệp sĩ và lượt bảo vệ của Hiệp Sĩ). Nhân Ngư chiến thắng khi đã mê hoặc toàn bộ người chơi hoặc còn lại cuối cùng.', color:'#eab308' },
   ];
+// ——— Map: plainName (bỏ emoji, bỏ dấu) -> roleKey ———
+const _nameToKey = (() => {
+  const ascii = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const stripEmoji = s => String(s).replace(/^[^\p{L}\p{N}]+/u,'').trim(); // bỏ emoji/skin-tone đầu
+  const map = new Map();
+  DEFAULT_ROLES.forEach(r => {
+    map.set(ascii(stripEmoji(r.name)), r.key);
+  });
+  return map;
+})();
+
+function roleKeyFromDisplay(display){
+  const plain = toAscii(stripLeadingEmoji(display));      // "phu thuy"
+  // So khớp 1–1 với DEFAULT_ROLES (cũng bỏ emoji + bỏ dấu)
+  for (const r of DEFAULT_ROLES){
+    const rn = toAscii(stripLeadingEmoji(r.name));        // "phu thuy"
+    if (rn === plain) return r.key;                       // -> "witch"
+  }
+  return null; // vai tuỳ chỉnh/không khớp
+}
 
 // Chuẩn hoá dữ liệu customRoles: cho phép dạng {name:{count,faction}}
 function normalizeCustomRoles(){
@@ -2665,7 +2697,7 @@ const defaultFactionMap = {
   const addSep = (label)=>{
     const sep = document.createElement('div');
     sep.className = 'sep';
-    sep.textContent = ` ❤️ ${label} ❤️ `;
+    sep.textContent = `  ${label}  `;
     $.rolesList.appendChild(sep);
   };
 
@@ -2804,10 +2836,10 @@ if (isKnight && prev > 0 && v === 0) {
 
   // In theo thứ tự phe: Ma sói -> Dân làng -> Đổi phe -> Phe thứ 3
   [
-    {key:'wolf',    label:'Ma sói'},
-    {key:'village', label:'Dân làng'},
-    {key:'swap',    label:'Đổi phe'},
-    {key:'third',   label:'Phe thứ 3'}
+    {key:'wolf',    label:'DANH SÁCH VAI TRÒ PHE: MA SÓI'},
+    {key:'village', label:'DANH SÁCH VAI TRÒ PHE: DÂN LÀNG'},
+    {key:'swap',    label:'DANH SÁCH VAI TRÒ PHE: ĐỔI PHE'},
+    {key:'third',   label:'DANH SÁCH VAI TRÒ PHE: THỨ 3'}
   ].forEach(sec=>{
     const arr = groups[sec.key];
     if(!arr.length) return;
@@ -2877,6 +2909,23 @@ function getHeadhunterHuntersByTarget(name){
   const map = STATE.headhunterTargets || {};
   return Object.keys(map).filter(hName => map[hName] === name);
 }
+function normVN(s){
+  return String(s||'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/đ/g,'d').toLowerCase();
+}
+/** Những vai KHÔNG được chọn làm mục tiêu cho 🎯 Thợ Săn Người (by key) */
+const HEadhunterBannedKeys = new Set([
+  'witch',   // Phù Thuỷ
+  'prince',  // Công Chúa
+  'lgac',    // Người Canh Gác
+  'tvan',    // Nhà Thiên Văn Học
+  'hbinh',   // Người Yêu Hòa Bình
+  'txa',     // Thiện Xạ
+  'hbcon',   // Hoa Bé Con
+  // thêm key nếu muốn cấm thêm
+]);
+
 function pickHeadhunterTargets(){
   STATE.headhunterTargets = {}; // reset mỗi lần bấm "Chia ngẫu nhiên"
 
@@ -2885,20 +2934,22 @@ function pickHeadhunterTargets(){
   if (!hunters.length) return;
 
   // Tập mục tiêu: mọi người thuộc phe dân làng (factionOf(role).cls === 'f-vil')
-  const villagers = list.filter(p => {
-  const isVil = (factionOf(p.role)?.cls === 'f-vil');
-  const plain = stripLeadingEmoji(p.role);
-  const isGhost = String(plain).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-                   .toLowerCase().includes('con ma');
-  return isVil && !isGhost;
+const villagers = list.filter(p => {
+  const fvil = (factionOf(p.role)?.cls === 'f-vil');
+  const key  = roleKeyFromDisplay(p.role); // null nếu là custom
+  const banned = key ? HEadhunterBannedKeys.has(key) : false;
+  return fvil && !banned;
 });
-
 
   const msgs = [];
   hunters.forEach(h => {
     // Không chọn trùng mục tiêu cho nhiều thợ săn nếu có thể
     const alreadyTaken = new Set(Object.values(STATE.headhunterTargets));
-    const pool = villagers.filter(v => v.name !== h.name && !alreadyTaken.has(v.name));
+const pool = villagers.filter(v => {
+  const key = roleKeyFromDisplay(v.role);
+  const banned = key ? HEadhunterBannedKeys.has(key) : false;
+  return v.name !== h.name && !alreadyTaken.has(v.name) && !banned;
+});
     if (!pool.length) return; // không còn dân để gán
 
     const pick = pool[Math.floor(rng(pool.length))];
