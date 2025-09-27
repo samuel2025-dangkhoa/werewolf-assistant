@@ -1402,31 +1402,70 @@ header {
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; z-index: 1000;
 }
-.fab-night:hover{ transform: translateY(-1px); }
+/* === Bong bóng chat '!!' mở bảng Thứ tự kêu dậy === */
+.bubble-night{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
 
-/* Thân modal nội dung 'Thứ tự kêu dậy' */
-#nightOrderBody{
-  background: rgba(8,12,28,.72);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 0 0 12px 12px;
-  padding: 14px 16px;
-  color: var(--text);
-  line-height: 1.7;
-  white-space: normal;                 /* dùng danh sách, không cần pre-wrap */
+  /* khung bong bóng */
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--accent) 0%, #5f44ff 100%);
+  color: #fff;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 14px;
+  border-radius: 18px 18px 0 18px; /* đuôi hướng vào góc phải dưới */
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
-#nightOrderBody .intro{ color:#c7cfff; margin: 0 0 8px }
-#nightOrderBody ol{ margin: 6px 0 10px; padding-left: 1.4em }
-#nightOrderBody li + li{ margin-top: 4px }
-#nightOrderBody .note{ opacity:.9; font-size:.95em }
-#nightOrderBody .sub{ color:#a5b4fc; font-size:.95em; margin:.25em 0 .5em }
-#nightOrderBody .section{
-  text-align:center; margin:10px 0 6px; color:var(--muted); font-weight:700
+
+/* Đuôi bong bóng (móc vào góc phải dưới) */
+.bubble-night::after{
+  content:"";
+  position:absolute;
+  right: 6px;
+  bottom: -8px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(135deg, var(--accent) 0%, #5f44ff 100%);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transform: rotate(45deg);
+  border-radius: 0 0 4px 0;
 }
+
+/* Nhãn “!!” đậm, to */
+.bubble-night .bangbang{
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Dòng mô tả ngắn */
+.bubble-night .label{
+  font-size: 14px;
+  opacity: .95;
+  white-space: nowrap;
+}
+
+/* Hiệu ứng hover nhẹ */
+.bubble-night:hover{ transform: translateY(-1px); }
 
 /* Ẩn khi in */
-@media print{ .fab-night{ display:none !important } }
+@media print{ .bubble-night{ display:none !important } }
+
+/* Màn nhỏ: thu gọn thành chỉ “!!” */
+@media (max-width:480px){
+  .bubble-night{ padding: 10px 12px; }
+  .bubble-night .label{ display:none; }
+}
 /* Cho thân modal cuộn khi nội dung dài */
 .modal{
   width: min(720px, 95vw);
@@ -1715,6 +1754,30 @@ header {
   color: var(--muted);
   white-space: normal;      /* cho phép xuống dòng khi hẹp */
 }
+/* Khung PDF trong modal "Thứ tự kêu dậy" */
+#nightOrderBody{ padding:0 !important } /* bỏ padding để iframe full */
+.pdf-wrap{
+  height: min(78vh, 720px);   /* cao vừa mắt, vẫn fit màn nhỏ */
+  max-height: calc(100dvh - 140px); /* trừ header modal + lề */
+  background:#0c0f1f;
+  border: 1px solid var(--border);
+  border-radius: 0 0 12px 12px; /* khớp bo góc thân modal */
+  overflow: hidden;
+}
+.pdf-wrap iframe{
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background:#0c0f1f;
+}
+
+/* Nút mở toàn màn hình (fallback) */
+.pdf-fallback{
+  padding:10px 12px;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
 
   </style>
 </head>
@@ -1723,7 +1786,7 @@ header {
     <div class="title">
       <div class="top-row">
         <div class="logo" aria-hidden="true">
-          <img src="https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/logo.png" alt="Logo Sói">
+          <img src="https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/image_werewofl/hinh_anh_logo.jpg" alt="Logo Sói">
         </div>
         <h1>Werewolf Assistant 🐺🎲</h1>
       </div>
@@ -1873,7 +1936,7 @@ header {
 </div>
   <div class="wrap">
     <!-- NHỚ đúng đuôi file: .jpg (hoặc link raw GitHub) -->
-    <img class="qr" src="https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/qr.jpg" alt="QR MB Bank 0332807382">
+    <img class="qr" src="https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/image_werewofl/hinh_anh_qr_ung_ho.jpg" alt="QR MB Bank 0332807382">
 
     <div class="info">
       <div class="row bank-row">
@@ -1895,7 +1958,7 @@ header {
   </div>
 
   <!-- ẢNH: căn giữa -->
-  <img class="promo-photo" src="https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/pr.png" alt="Đồ len handmade dễ thương">
+  <img class="promo-photo" src="https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/image_werewofl/hinh_anh_pr_len_03.jpg" alt="Đồ len handmade dễ thương">
 
   <!-- LINK: căn giữa + màu như tiêu đề ngân hàng -->
   <p class="promo-link">
@@ -1911,7 +1974,7 @@ header {
   </div>
 
   <div class="footer no-print">Created by Dang Khoa ❤️ – Lưu tự động, hoạt động offline.</div>
-  <div class="footer no-print">Phiên bản cập nhật mới nhất: 22:15 25/09/2025</div>
+  <div class="footer no-print">Phiên bản cập nhật mới nhất: 21:15 27/09/2025</div>
   <!-- Modal xem mô tả vai -->
   <div id="roleModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal" role="document">
@@ -1945,8 +2008,12 @@ header {
     <div class="content" id="playersArchiveBody"></div>
   </div>
 </div>
-<!-- NÚT '!!' nổi -->
-<button class="fab-night no-print" id="nightOrderBtn" aria-label="Thứ tự kêu dậy">!!</button>
+
+<!-- NÚT '!!' dạng bong bóng chat -->
+<button class="bubble-night no-print" id="nightBubble" aria-label="Mở 'Thứ tự kêu dậy'">
+  <span class="bangbang">!!</span>
+  <span class="label">Thứ tự kêu dậy</span>
+</button>
 
 <!-- Modal: Thứ tự kêu dậy -->
 <div id="nightOrderModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
@@ -2223,6 +2290,93 @@ const isEliminated = (p) => {
 doppelModal.btnClose?.addEventListener('click', ()=> doppelModal.close());
 doppelModal.wrap?.addEventListener('click', (e)=>{ if(e.target===doppelModal.wrap) doppelModal.close(); });
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') doppelModal.close(); });
+// ===== PDF trong modal "Thứ tự kêu dậy" =====
+
+const PDF_URL = "https://raw.githubusercontent.com/samuel2025-dangkhoa/werewolf-assistant/refs/heads/main/Thu_tu_keu_day_moi_dem.pdf";
+
+async function ensurePdfInNightModal(){
+  const body = document.getElementById('nightOrderBody');
+  if (!body || body.dataset.pdfLoaded === "1") return;
+
+  // Khung sẵn
+  body.innerHTML = `
+    <div class="pdf-wrap">
+      <div id="pdfHost" style="width:100%;height:100%;"></div>
+    </div>
+    <div class="pdf-fallback no-print">
+      <a class="btn" href="${PDF_URL}" target="_blank" rel="noopener">⬇️ Tải xuống bảng PDF</a>
+    </div>`;
+  body.dataset.pdfLoaded = "1";
+
+  const host = body.querySelector('#pdfHost');
+
+  try {
+    // fetch -> arrayBuffer -> tạo Blob *đúng loại PDF*
+    const res = await fetch(PDF_URL, { mode: 'cors', cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const buf = await res.arrayBuffer();
+    const pdfBlob = new Blob([buf], { type: 'application/pdf' });
+    const blobUrl = URL.createObjectURL(pdfBlob);
+
+    const viewerParams = "#toolbar=1&navpanes=0&scrollbar=1&view=FitH&zoom=page-width";
+
+    // Dùng <object type="application/pdf"> thay cho iframe
+    host.innerHTML = `
+      <object id="pdfObject"
+              data="${blobUrl}${viewerParams}"
+              type="application/pdf"
+              width="100%" height="100%">
+        <p style="padding:12px">
+          Trình duyệt của bạn không xem được PDF trực tiếp.
+          Hãy bấm <a href="${PDF_URL}" target="_blank" rel="noopener">Tải xuống bảng PDF</a>.
+        </p>
+      </object>`;
+
+    // Giải phóng blob khi đóng modal
+    const wrap = document.getElementById('nightOrderModal');
+    const revoke = () => { URL.revokeObjectURL(blobUrl); wrap.removeEventListener('transitionend', revoke); };
+    wrap.addEventListener('transitionend', revoke);
+  } catch (err) {
+    host.innerHTML = `
+      <div style="padding:14px">
+        <p style="margin:0 0 8px;color:#c7cfff">Không thể tải PDF để xem trực tiếp.</p>
+        <p style="margin:0">Bạn có thể bấm <b>“Tải xuống bảng PDF”</b> ở dưới.</p>
+      </div>`;
+    console.error('PDF load error:', err);
+  }
+}
+
+function openNightOrder(){
+  ensurePdfInNightModal();
+  const wrap = document.getElementById('nightOrderModal');
+  if (!wrap) return;
+  wrap.classList.add('show');
+  wrap.setAttribute('aria-hidden','false');
+  document.getElementById('nightOrderClose')?.focus();
+}
+
+// Open handlers
+document.getElementById('nightBubble')?.addEventListener('click', openNightOrder);
+document.getElementById('nightOrderBtn')?.addEventListener('click', openNightOrder); // legacy id support
+
+// Close handlers
+const nightWrap = document.getElementById('nightOrderModal');
+document.getElementById('nightOrderClose')?.addEventListener('click', () => {
+  nightWrap?.classList.remove('show');
+  nightWrap?.setAttribute('aria-hidden','true');
+});
+nightWrap?.addEventListener('click', (e) => {
+  if (e.target === nightWrap) {
+    nightWrap.classList.remove('show');
+    nightWrap.setAttribute('aria-hidden','true');
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && nightWrap?.classList.contains('show')) {
+    nightWrap.classList.remove('show');
+    nightWrap.setAttribute('aria-hidden','true');
+  }
+});
 
   // ====== STATE ======
   const STORAGE_KEY = 'werewolf_mod_state_v1';
